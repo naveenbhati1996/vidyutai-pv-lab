@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VidyutAI PV Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1F5F8; --panel:#FFFFFF; --ink:#0F2230; --muted:#587080; --line:#D3DDE5; --grid:#E4EBF0;
+  --sun:#B96A00; --sunSoft:#FBEBD0; --cur:#0C7C87; --bad:#C23B3D; --good:#2A7B4C; --warn:#A86A00;
+  --s1:#2F6FB0; --s2:#8A4FB8; --s3:#2A8C6B;
+  --sky:#DCEBF5; --sky2:#EEF5FA; --roof:#D9CBB4; --roofLine:#C4B396; --frame:#9AA9B5; --cell:#1D3B5E; --cellLine:#34587F;
+  --shade:#1A1A1A; --cable:#4A5865; --sunDisc:#F2B33D; --cloud:#FFFFFF; --boxFill:#F6F8FA; --boxLine:#8A9AA8;
+  --f-display:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --f-data:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1520; --panel:#11202D; --ink:#E5EDF3; --muted:#8CA3B3; --line:#233746; --grid:#1A2D3A;
+    --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
+    --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
+    --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
+    --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1520; --panel:#11202D; --ink:#E5EDF3; --muted:#8CA3B3; --line:#233746; --grid:#1A2D3A;
+  --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
+  --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
+  --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
+  --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; color-scheme:dark;
+}
+html,body{margin:0;height:100%}
+body{background:#08121B;color:var(--ink);font-family:var(--f-body);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px 16px;box-sizing:border-box;min-height:100vh}
+*{box-sizing:border-box}
+/* 1280x720 stage, scaled to fit the window */
+#fit{width:100%;max-width:1280px;position:relative}
+#fit::before{content:"";display:block;padding-top:56.25%}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;background:var(--bg);overflow:hidden;border-radius:6px}
+body.rec{padding:0;gap:0;background:var(--bg)}
+body.rec #fit{max-width:none}
+body.rec #stage{border-radius:0}
+body.rec #ctl,body.rec #below{display:none}
+/* top bar */
+#top{position:absolute;left:0;right:0;top:0;height:62px;background:#0F2230;color:#fff;display:flex;align-items:center;gap:18px;padding:0 26px}
+#top .brand{font:700 13px var(--f-display);letter-spacing:.14em;color:#F2B33D;white-space:nowrap}
+#top .ttl{font:600 24px var(--f-display);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#top .step{font:500 14px var(--f-data);color:#9FB4C3}
+#top .tag{font:600 13px var(--f-body);padding:5px 12px;border-radius:999px;background:#2A7B4C;color:#fff}
+#top .tag.bad{background:#C23B3D} #top .tag.warn{background:#B96A00}
+#prog{position:absolute;left:0;bottom:0;height:5px;background:#F2B33D;width:0}
+/* scenes */
+.scene{position:absolute;left:0;right:0;top:62px;bottom:0;opacity:0;transition:opacity .45s ease;pointer-events:none}
+.scene.on{opacity:1;pointer-events:auto}
+.pad{padding:22px 28px}
+/* caption */
+#cap{position:absolute;left:28px;right:28px;bottom:20px;min-height:64px;background:#0F2230;color:#fff;border-left:6px solid #F2B33D;border-radius:6px;padding:12px 18px;font-size:19px;line-height:1.38;display:flex;align-items:center;transition:opacity .3s}
+#cap b{color:#F2B33D;font-family:var(--f-display)}
+#cap.hide{opacity:0}
+/* scenario layout */
+#sc{display:grid;grid-template-columns:720px 1fr;gap:18px;padding:16px 28px 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative}
+.panel h4{margin:0 0 6px;font:600 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+#plantBox svg{width:100%;height:auto}
+#plantBox{padding:8px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.tile span{display:block;font-size:12px;color:var(--muted)}
+.tile b{font:500 21px var(--f-data);font-variant-numeric:tabular-nums}
+.tile b span{display:inline;font:inherit;color:inherit}
+.tile small{display:block;font:400 11.5px var(--f-data);color:var(--muted)}
+.tile.bad b{color:var(--bad)} .tile.good b{color:var(--good)} .tile.warn b{color:var(--warn)}
+#res{display:flex;flex-direction:column;gap:8px}
+#resHead{font:600 17px var(--f-display);color:var(--ink);text-transform:none;letter-spacing:0}
+#resState{font:500 12px var(--f-data);padding:3px 9px;border-radius:999px;background:var(--grid);color:var(--muted)}
+#resState.live{background:var(--sunSoft);color:var(--sun)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;border-top:3px solid;vertical-align:middle;margin-right:5px}
+.legend i.cur{border-color:var(--cur)} .legend i.pow{border-color:var(--sun)} .legend i.gh{border-color:var(--muted);border-top-style:dashed;border-top-width:2px} .legend i.bad{border-color:var(--bad)}
+#resChart{height:262px}
+.big{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.big .tile b{font-size:25px}
+#dx{font-size:14px;line-height:1.4;color:var(--ink);background:var(--sunSoft);border:1px solid var(--sun);border-radius:8px;padding:8px 11px;min-height:58px;opacity:0;transition:opacity .4s}
+#dx.on{opacity:1}
+#dx b{font-family:var(--f-display)}
+/* chart classes from the lab page */
+svg{display:block;max-width:100%}
+svg text{font-family:var(--f-data);font-size:12px}
+.gl{stroke:var(--grid);stroke-width:1} .ax{stroke:var(--muted);stroke-width:1}
+.tk{fill:var(--muted)} .ttl{fill:var(--muted);font-size:11px}
+.ttl.c{fill:var(--cur)} .ttl.p{fill:var(--sun)}
+.ln{fill:none;stroke-width:2.2;stroke-linejoin:round}
+.ln.cur{stroke:var(--cur)} .ln.pow{stroke:var(--sun)} .ln.bad{stroke:var(--bad)} .ln.good{stroke:var(--good)}
+.ln.s1{stroke:var(--s1)} .ln.s2{stroke:var(--s2)} .ln.s3{stroke:var(--s3)}
+.ln.gh{stroke:var(--muted);stroke-width:1.6;stroke-dasharray:5 4;opacity:.8}
+.ln.thin{stroke-width:1.4}
+.ref{stroke:var(--muted);stroke-dasharray:4 4;stroke-width:1.2}
+.ref.bad{stroke:var(--bad)} .ref.warn{stroke:var(--warn)} .ref.cur{stroke:var(--cur)}
+.reflbl.bad{fill:var(--bad)} .reflbl.warn{fill:var(--warn)} .reflbl.cur{fill:var(--cur)}
+.mk{stroke:var(--panel);stroke-width:2}
+.mk.pow{fill:var(--sun)} .mk.cur{fill:var(--cur)} .mk.bad{fill:var(--bad)} .mk.good{fill:var(--good)}
+.mk.ring{fill:none;stroke:var(--ink);stroke-width:2}
+.dot{fill:var(--sun)} .sc{stroke:var(--panel);stroke-width:1}
+.sc.bad{fill:var(--bad)} .sc.cur{fill:var(--cur)}
+.mklbl{fill:var(--ink);font-size:11px}
+.ln.draw{transition:stroke-dashoffset 1.3s ease-out}
+.flow{fill:none;stroke-linecap:round}
+/* title + end */
+.card-scene{background:#0F2230;color:#fff;display:flex;flex-direction:column;justify-content:center;padding:0 90px;top:0!important;z-index:5}
+.card-scene .bar{position:absolute;left:0;right:0;top:0;height:10px;background:#F2B33D}
+.card-scene .k{font:700 18px var(--f-display);letter-spacing:.2em;color:#F2B33D}
+.card-scene h1{font:700 76px var(--f-display);margin:10px 0 6px;letter-spacing:-.01em}
+.card-scene p{font-size:24px;color:#C7D5DF;margin:0 0 30px;max-width:720px;line-height:1.4}
+.card-scene .who{font-size:20px;color:#fff;line-height:1.55}
+.card-scene .who span{color:#9FB4C3}
+.card-scene svg.sunarr{position:absolute;right:80px;top:120px;width:300px;opacity:.95}
+/* ratings */
+.rgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:20px 28px 0}
+.rgrid .panel{padding:14px 16px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:7px 14px;font-size:15.5px}
+.kv b{font:500 17px var(--f-data);text-align:right;font-variant-numeric:tabular-nums}
+.kv .sep{grid-column:1/-1;border-top:1px solid var(--line);margin:2px 0}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font:600 12px var(--f-body);border:1px solid var(--good);color:var(--good)}
+.pill.bad{color:var(--bad);border-color:var(--bad)}
+/* lab */
+.lgrid{display:grid;grid-template-columns:600px 1fr;gap:16px;padding:16px 28px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:right;padding:4px 8px;border-bottom:1px solid var(--line)}
+th{font:600 11.5px var(--f-display);letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+td{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+td.l,th.l{text-align:left;font-family:var(--f-body)}
+tr.hl td{background:var(--sunSoft)}
+.lab-note{font-size:13px;color:var(--muted);margin:8px 0 0;line-height:1.4}
+#labChart{height:250px}
+/* summary */
+.sgrid{display:grid;grid-template-columns:1fr 430px;gap:16px;padding:18px 28px 0}
+.sbar{display:grid;grid-template-columns:250px 1fr 80px;align-items:center;gap:12px;font-size:16px;margin:9px 0}
+.sbar .tr{height:20px;background:var(--grid);border-radius:10px;position:relative;overflow:hidden}
+.sbar .fl{position:absolute;left:0;top:0;bottom:0;border-radius:10px;width:0;transition:width 1.1s ease-out}
+.sbar .v{font:500 17px var(--f-data);text-align:right}
+/* player controls */
+#ctl{width:100%;max-width:1280px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:#C7D5DF;font-size:14px}
+#ctl button,#ctl a{background:#16293A;color:#fff;border:1px solid #2B4255;border-radius:8px;padding:8px 14px;font:500 14px var(--f-body);cursor:pointer;text-decoration:none}
+#ctl button:hover,#ctl a:hover{border-color:#F2B33D}
+#ctl button:focus-visible,#ctl a:focus-visible{outline:2px solid #F2B33D;outline-offset:2px}
+#ctl .sp{flex:1}
+#dots{display:flex;flex-wrap:wrap;gap:5px}
+#dots button{padding:5px 9px;font-size:12px}
+#dots button[aria-current="true"]{background:#F2B33D;color:#0F2230;border-color:#F2B33D}
+#below{width:100%;max-width:1280px;color:#7F95A6;font-size:12.5px;line-height:1.5}
+@media (max-width:700px){#ctl .lbl{display:none}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="top"><span class="brand">VIDYUTAI · SOLAR PV LAB</span><span class="ttl" id="tTitle"></span><span class="tag" id="tTag" hidden></span><span class="step" id="tStep"></span></div>
+
+  <!-- title -->
+  <section class="scene card-scene" id="s-title"><div class="bar"></div>
+    <div class="k">PROJECT: VIDYUTAI</div>
+    <h1>Solar PV Lab</h1>
+    <p>10 kW bifacial rooftop plant: what shading, dust, hot spots and faults do to the I–V curve, and how much power each one costs.</p>
+    <div class="who">Prepared by <b>Mr. Naveen Bhati</b><br><span>Department of Electrical Engineering, IIT Gandhinagar</span><br>PI: <b>Prof. Pallavi Bhardwaj</b></div>
+    <svg class="sunarr" viewBox="0 0 300 260" aria-hidden="true"><circle cx="230" cy="55" r="34" fill="#F2B33D"/><g stroke="#F2B33D" stroke-width="5" stroke-linecap="round"><line x1="230" y1="5" x2="230" y2="-8"/><line x1="280" y1="55" x2="294" y2="55"/><line x1="266" y1="19" x2="276" y2="9"/><line x1="194" y1="19" x2="184" y2="9"/><line x1="266" y1="91" x2="276" y2="101"/></g><g fill="#22476F" stroke="#6D7F8E" stroke-width="2"><rect x="10" y="130" width="80" height="50"/><rect x="96" y="130" width="80" height="50"/><rect x="182" y="130" width="80" height="50"/><rect x="10" y="190" width="80" height="50"/><rect x="96" y="190" width="80" height="50"/><rect x="182" y="190" width="80" height="50"/></g></svg>
+  </section>
+
+  <!-- ratings -->
+  <section class="scene" id="s-rate">
+    <div class="rgrid">
+      <div class="panel"><h4>One PV module (bifacial)</h4><div class="kv" id="kvMod"></div></div>
+      <div class="panel"><h4>Plant on the roof</h4><div class="kv" id="kvPlant"></div></div>
+      <div class="panel"><h4>Test load for one module</h4><div id="kvLoad"></div></div>
+    </div>
+  </section>
+
+  <!-- lab data -->
+  <section class="scene" id="s-lab">
+    <div class="lgrid">
+      <div class="panel"><h4><span>Measured at IIT Gandhinagar</span><span id="labWhen"></span></h4>
+        <table id="labTbl"></table>
+        <p class="lab-note" id="labNote"></p></div>
+      <div class="panel"><h4><span>Measured points on one module</span></h4>
+        <div class="legend"><span><i class="cur"></i>Current (A)</span><span><i class="pow"></i>Power (W)</span></div>
+        <div id="labChart"></div>
+        <table id="irrTbl" style="margin-top:6px"></table></div>
+    </div>
+  </section>
+
+  <!-- scenario -->
+  <section class="scene" id="s-sc">
+    <div id="sc">
+      <div>
+        <div class="panel" id="plantBox"></div>
+        <div class="tiles" id="pTiles"></div>
+      </div>
+      <div class="panel" id="res">
+        <h4><span id="resHead">Result</span><span id="resState">healthy reference</span></h4>
+        <div class="legend" id="resLeg"><span><i class="gh"></i>Healthy</span><span><i class="cur"></i>Current now</span><span><i class="pow"></i>Power now</span></div>
+        <div id="resChart"></div>
+        <div class="big" id="bigTiles"></div>
+        <div id="dx"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- summary -->
+  <section class="scene" id="s-sum">
+    <div class="sgrid">
+      <div class="panel"><h4>Power loss against the healthy plant (1000 W/m², 32 °C)</h4><div id="sumBars"></div></div>
+      <div class="panel"><h4>What finds each problem</h4><table id="sumTbl"></table></div>
+    </div>
+  </section>
+
+  <!-- end -->
+  <section class="scene card-scene" id="s-end"><div class="bar"></div>
+    <div class="k">PROJECT: VIDYUTAI</div>
+    <h1 style="font-size:58px">Thank you</h1>
+    <p id="endLine"></p>
+    <div class="who">Mr. Naveen Bhati · Department of Electrical Engineering, IIT Gandhinagar<br>PI: <b>Prof. Pallavi Bhardwaj</b><br><span>Model based on IEC 61215, IEC TS 62446-3, IEC 62548, IEC 60891, EN 50530</span></div>
+  </section>
+
+  <div id="cap" class="hide"></div>
+  <div id="prog"></div>
+</div></div>
+
+<div id="ctl">
+  <button id="bPlay" type="button">Pause</button>
+  <button id="bRe" type="button">Restart</button>
+  <div id="dots"></div>
+  <span class="sp"></span>
+  <a href="VidyutAI_Solar_PV_Lab_Demo.mp4" download>Download video (MP4)</a>
+  <a href="data/VidyutAI_Load_Resistance_Table.xlsx" download>Load table (Excel)</a>
+  <a id="bLab" href="lab.html">Open the interactive lab</a>
+</div>
+<div id="below">Every number on screen is computed live from the module ratings and lab data in the CONFIG block at the top of the script, so changing a rating there changes the whole demo.</div>
+
+<script>
+/* =====================================================================
+   CONFIG: edit ratings and lab data here. Everything else follows.
+   ===================================================================== */
+var CONFIG={
+  module:{name:'Bifacial TOPCon module',pmax:565,voc:50,isc:14,vmp:42,imp:13.2,cells:'144 half-cells, 3 bypass diodes',bifaciality:0.80,beta:-0.25,alpha:0.046,nmot:43},
+  labVoltage:'45–46 V at light load (measured)',
+  plant:{strings:3,perString:6,inverter:'10 kW, 97.5 % efficient',site:'Rooftop, IIT Gandhinagar'},
+  load:{
+    eload:'DC electronic load: 80 V, 30 A, 1 kW, CR mode',
+    rheo:'Rheostat: 0–10 Ω, 25 A, 1 kW',
+    present:{text:'Present rheostat: 0–20 Ω, 10 A',ok:false},
+    string:'One string: ≥ 400 V, 20 A, 4 kW',
+    array:'Whole array: ≥ 400 V, 55 A, 12 kW'
+  },
+  /* steady operating points from the Hioki LR8431 logger (WAVE0002/0003, 28 Oct 2026), V = 31 × CH10, I = 126.67 × CH9 */
+  lab:{when:'28–29 Oct 2026',
+    points:[[44.99,3.51],[45.14,3.35],[45.36,3.10],[45.42,3.04],[45.77,2.66],[45.83,2.60],[45.89,2.52],[46.02,2.35],[46.10,2.29],[46.25,2.14],[46.29,2.05]],
+    irr:[['A','28 Oct',265,33,2.6],['B','28 Oct',823,46,3.2],['C','29 Oct',820,44.62,2.8],['D','29 Oct',512,39.21,1.66]],
+    note:'Dusty module, rheostat set near 13–23 Ω. Logger: Hioki LR8431-20, 100 ms. No shading test was done in this phase.'},
+  sim:{G:1000,Ta:32,alb:0.25}
+};
+</script>
+<script>
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function el(h){var t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstChild}
+var REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function r0(x){return Math.round(x)}
+function f1(x){return x.toFixed(1)}
+function f2(x){return x.toFixed(2)}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+var MOD={voc:50,isc:14,vmp:42,imp:13.2,beta:-0.0025,alpha:0.00046,nmot:43,phi:0.80};
+var IMPR=MOD.imp/MOD.isc, VMPR=MOD.vmp/MOD.voc;
+var C2=(VMPR-1)/Math.log(1-IMPR), C1=(1-IMPR)*Math.exp(-VMPR/C2);
+var VD=0.45, RCAB=0.15, VF=0.4, ETA=0.975;
+function tCell(Ta,G){return Ta+(MOD.nmot-20)/800*G}
+function subMake(Gf,Gr,T,shade,soil,d){
+  var Geff=Math.max(0,Gf*(1-shade)*(1-soil)+MOD.phi*Gr);
+  var isc=MOD.isc*Geff/1000*(1+MOD.alpha*(T-25));
+  var voc=Math.max(0.3,(MOD.voc*(1+MOD.beta*(T-25))+2.0*Math.log(Math.max(Geff,2)/1000))/3);
+  return {isc:Math.max(isc,1e-4),voc:voc,d:d||'ok',geff:Geff};
+}
+function subV(s,I){
+  if(s.d==='short')return 0;
+  var x=1+(1-I/s.isc)/C1, v=x>1e-12?C2*s.voc*Math.log(x):-1e3;
+  if(s.d==='ok')return Math.max(v,-VD);
+  if(v>=0)return v;
+  return -Math.min(25,Math.max(0,(I-s.isc))*2.5);
+}
+function strV(st,I){
+  var v=0,n=st.mods.length-(st.ll||0),m,k,mo;
+  for(m=0;m<n;m++){mo=st.mods[m];for(k=0;k<3;k++)v+=subV(mo.subs[k],I);v-=I*mo.rs}
+  return v-I*(st.rc==null?RCAB:st.rc);
+}
+function strI(st,V){
+  if(st.open)return 0;
+  var hi=st.imax*1.0005,lo=-60,k,mid;
+  if(strV(st,hi)>=V)return hi;
+  if(strV(st,lo)<=V)return lo;
+  for(k=0;k<34;k++){mid=(lo+hi)/2;if(strV(st,mid)>V)lo=mid;else hi=mid}
+  return (lo+hi)/2;
+}
+function finishString(st){
+  var mx=0;st.mods.forEach(function(mo){mo.subs.forEach(function(s){mx=Math.max(mx,s.isc)})});st.imax=mx;
+  st.key=JSON.stringify([st.mods.map(function(mo){return [mo.rs,mo.subs.map(function(s){return [s.isc.toFixed(5),s.voc.toFixed(5),s.d]})]}),!!st.open,st.ll||0,st.rc]);
+  return st;
+}
+function groupA(A){var map={},g=[];A.strings.forEach(function(st){if(map[st.key])map[st.key].n++;else{map[st.key]={st:st,n:1};g.push(map[st.key])}});A.groups=g;return A}
+function arrI(A,V){var I=0;for(var i=0;i<A.groups.length;i++)I+=A.groups[i].n*strI(A.groups[i].st,V);return I}
+function emptyShade(){var a=[];for(var s=0;s<3;s++){a.push([]);for(var m=0;m<6;m++)a[s].push([0,0,0])}return a}
+function scenario(o){var S={G:1000,Ta:30,alb:0.25,soil:0,sh:emptyShade(),diode:{},openStr:-1,ll:{s:-1,k:0},rs:{},hot:null};for(var k in o)S[k]=o[k];return S}
+function build(S){
+  var Gr=S.G*S.alb*VF,T=tCell(S.Ta,S.G),strings=[];
+  for(var s=0;s<3;s++){
+    var mods=[];
+    for(var m=0;m<6;m++){
+      var subs=[];
+      for(var k=0;k<3;k++)subs.push(subMake(S.G,Gr,T,S.sh[s][m][k],S.soil,S.diode[s+'-'+m+'-'+k]));
+      mods.push({subs:subs,rs:(S.rs[s]||0)});
+    }
+    strings.push(finishString({mods:mods,open:S.openStr===s,ll:S.ll.s===s?S.ll.k:0}));
+  }
+  return groupA({strings:strings,T:T,Gr:Gr,G:S.G,Ta:S.Ta,S:S});
+}
+function single(nMods,G,Ta,alb,T){
+  var Gr=G*alb*VF;T=T==null?tCell(Ta,G):T;
+  var mods=[];for(var m=0;m<nMods;m++){var subs=[];for(var k=0;k<3;k++)subs.push(subMake(G,Gr,T,0,0,'ok'));mods.push({subs:subs,rs:0})}
+  return {mods:mods,open:false,ll:0,rc:nMods===1?0:RCAB};
+}
+function makeA(strings,G,Ta,T){return groupA({strings:strings.map(finishString),G:G,Ta:Ta,T:T})}
+function arrCurve(A,n){
+  n=n||160;
+  var vmax=0,k;A.strings.forEach(function(st){if(!st.open)vmax=Math.max(vmax,strV(st,0))});
+  if(vmax<=0||arrI(A,0)<=0)return {voc:0,isc:0,pts:[[0,0]],pw:[[0,0]],best:{p:0,v:0,i:0},peaks:0,peakList:[],ff:0};
+  var lo=0,hi=vmax+1;
+  for(k=0;k<40;k++){var mid=(lo+hi)/2;if(arrI(A,mid)>0)lo=mid;else hi=mid}
+  var voc=lo,pts=[],pw=[],best={p:0,v:0,i:0};
+  for(k=0;k<=n;k++){var v=voc*k/n,i=Math.max(0,arrI(A,v)),p=v*i;pts.push([v,i]);pw.push([v,p]);if(p>best.p)best={p:p,v:v,i:i}}
+  var thr=best.p*0.04,state='up',cand=-1,candV=0,low=0,pk=[];
+  pw.forEach(function(q){var v=q[0],p=q[1];
+    if(state==='up'){if(p>cand){cand=p;candV=v}else if(cand-p>thr){pk.push({v:candV,p:cand});state='down';low=p}}
+    else{if(p<low)low=p;else if(p-low>thr){state='up';cand=p;candV=v}}});
+  if(state==='up'&&cand>0)pk.push({v:candV,p:cand});
+  var isc=pts[0][1];
+  return {voc:voc,isc:isc,pts:pts,pw:pw,best:best,peaks:pk.length,peakList:pk,ff:best.p/(voc*isc||1)};
+}
+function bypassMap(A,V){
+  return A.strings.map(function(st){
+    var I=strI(st,V);
+    return st.mods.map(function(mo,m){return mo.subs.map(function(s){
+      if(m>=st.mods.length-(st.ll||0))return false;
+      return s.d==='ok'&&subV(s,I)<=-VD+1e-6;})});
+  });
+}
+function countBypass(map){var n=0;map.forEach(function(a){a.forEach(function(b){b.forEach(function(x){if(x)n++})})});return n}
+
+/* hot-spot cell model */
+function hotspot(o){
+  var Tm=o.Ta+(MOD.nmot-20)/800*o.G*1.3/(1+0.3*o.wind);
+  var Ih=MOD.imp*o.G/1000/2,Isc=MOD.isc*o.G/1000/2,IL=(1-o.s)*Isc;
+  var vcell=MOD.vmp/72,vcl=o.diode==='ok'?23*vcell+VD:20;
+  var vr=0,ic=Ih;
+  if(Ih>IL){vr=Math.min((Ih-IL)*o.rsh,vcl);ic=Math.min(Ih,IL+vr/o.rsh)}
+  var P=vr*ic,rth=1.2/(1+0.15*o.wind),tau=6/(1+0.1*o.wind),Tss=Tm+P*rth;
+  return {Tm:Tm,Ih:Ih,IL:IL,vr:vr,ic:ic,P:P,Tss:Tss,tau:tau,vcl:vcl,rth:rth,
+    bypass:o.diode==='ok'&&vr>=vcl-1e-9,
+    Tat:function(t){return Tm+(Tss-Tm)*(1-Math.exp(-t/tau))},
+    tTo:function(th){if(Tss<=th)return null;if(Tm>=th)return 0;return -tau*Math.log(1-(th-Tm)/(Tss-Tm))}};
+}
+function irColor(T){
+  var x=clamp((T-20)/100,0,1);
+  var st=[[0,[20,11,52]],[0.25,[91,26,134]],[0.5,[195,59,110]],[0.72,[244,138,44]],[0.9,[251,233,107]],[1,[255,251,224]]];
+  for(var i=1;i<st.length;i++)if(x<=st[i][0]){var a=st[i-1],b=st[i],f=(x-a[0])/(b[0]-a[0]);
+    return 'rgb('+[0,1,2].map(function(j){return r0(a[1][j]+(b[1][j]-a[1][j])*f)}).join(',')+')'}
+  return 'rgb(255,251,224)';
+}
+function niceStep(x){var p=Math.pow(10,Math.floor(Math.log10(x))),f=x/p;return (f<1.5?1:f<3?2:f<7?5:10)*p}
+function ticks(a,b,n){var s=niceStep((b-a)/n),o=[];for(var v=Math.ceil(a/s-1e-9)*s;v<=b+1e-9;v+=s)o.push(+v.toFixed(6));return o}
+function ft(t){return String(+t.toFixed(2))}
+function chart(host,o){
+  var w=Math.max(260,host.clientWidth||320);
+  var h=o.h||Math.round(Math.min(300,Math.max(210,w*0.56)));
+  var m={l:46,r:o.y2?50:14,t:24,b:36},iw=w-m.l-m.r,ih=h-m.t-m.b;
+  var x0=o.xmin!=null?o.xmin:0,x1=o.xmax,y0=o.ymin!=null?o.ymin:0,y1=o.ymax;
+  if(x1<=x0)x1=x0+1;if(y1<=y0)y1=y0+1;
+  var z0=o.y2&&o.y2.min!=null?o.y2.min:0,z1=o.y2?Math.max(o.y2.max,z0+1):1;
+  function X(v){return m.l+(v-x0)/(x1-x0)*iw}
+  function Y(v){return m.t+ih-(v-y0)/(y1-y0)*ih}
+  function Z(v){return m.t+ih-(v-z0)/(z1-z0)*ih}
+  function path(a,f){return 'M'+a.map(function(p){return X(p[0]).toFixed(1)+','+f(p[1]).toFixed(1)}).join('L')}
+  var s='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="'+(o.aria||'chart')+'">';
+  s+='<defs><clipPath id="'+o.id+'c"><rect x="'+m.l+'" y="'+(m.t-2)+'" width="'+iw+'" height="'+(ih+4)+'"/></clipPath></defs>';
+  ticks(y0,y1,5).forEach(function(t){var y=Y(t);
+    s+='<line class="gl" x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/><text class="tk" x="'+(m.l-6)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+ft(t)+'</text>'});
+  if(o.y2)ticks(z0,z1,5).forEach(function(t){s+='<text class="tk" x="'+(m.l+iw+6)+'" y="'+(Z(t)+4).toFixed(1)+'">'+ft(t)+'</text>'});
+  ticks(x0,x1,o.xt||6).forEach(function(t){s+='<text class="tk" x="'+X(t).toFixed(1)+'" y="'+(m.t+ih+16)+'" text-anchor="middle">'+ft(t)+'</text>'});
+  s+='<line class="ax" x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+(m.t+ih)+'" y2="'+(m.t+ih)+'"/>';
+  if(o.xlabel)s+='<text class="ttl" x="'+(m.l+iw/2)+'" y="'+(h-4)+'" text-anchor="middle">'+o.xlabel+'</text>';
+  if(o.ylabel)s+='<text class="ttl '+(o.ylc||'')+'" x="'+m.l+'" y="13">'+o.ylabel+'</text>';
+  if(o.y2&&o.y2.label)s+='<text class="ttl '+(o.y2.c||'')+'" x="'+(m.l+iw)+'" y="13" text-anchor="end">'+o.y2.label+'</text>';
+  s+='<g clip-path="url(#'+o.id+'c)">';
+  (o.hlines||[]).forEach(function(l){var y=(l.ax==='y2'?Z:Y)(l.y);
+    s+='<line class="ref '+(l.cls||'')+'" x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/>';
+    if(l.label)s+='<text class="tk reflbl '+(l.cls||'')+'" x="'+(l.left?m.l+4:m.l+iw-4)+'" y="'+(y-4).toFixed(1)+'" text-anchor="'+(l.left?'start':'end')+'">'+l.label+'</text>'});
+  (o.vlines||[]).forEach(function(l){var x=X(l.x);
+    s+='<line class="ref '+(l.cls||'')+'" x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="'+m.t+'" y2="'+(m.t+ih)+'"/>';
+    if(l.label)s+='<text class="tk reflbl '+(l.cls||'')+'" x="'+(x+4).toFixed(1)+'" y="'+(m.t+12)+'">'+l.label+'</text>'});
+  (o.series||[]).forEach(function(se){if(se.pts&&se.pts.length>1)s+='<path class="ln '+se.cls+'" d="'+path(se.pts,se.ax==='y2'?Z:Y)+'"/>'});
+  (o.scatter||[]).forEach(function(se){se.pts.forEach(function(p){s+='<circle class="sc '+se.cls+'" cx="'+X(p[0]).toFixed(1)+'" cy="'+(se.ax==='y2'?Z:Y)(p[1]).toFixed(1)+'" r="'+(se.r||3.5)+'"/>'})});
+  (o.dots||[]).forEach(function(d){s+='<circle class="dot" cx="'+X(d.x).toFixed(1)+'" cy="'+(d.ax==='y2'?Z:Y)(d.y).toFixed(1)+'" r="'+d.r+'" opacity="'+d.o+'"/>'});
+  s+='</g>';
+  (o.marks||[]).forEach(function(k){
+    var cx=X(k.x),cy=(k.ax==='y2'?Z:Y)(k.y);
+    if(k.sq)s+='<rect class="mk '+k.cls+'" x="'+(cx-5).toFixed(1)+'" y="'+(cy-5).toFixed(1)+'" width="10" height="10"/>';
+    else s+='<circle class="mk '+k.cls+'" cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+(k.r||5)+'"/>';
+    if(k.label)s+='<text class="mklbl" x="'+(cx>m.l+iw*0.6?cx-9:cx+9).toFixed(1)+'" y="'+(cy-(k.below?-16:8)).toFixed(1)+'" text-anchor="'+(cx>m.l+iw*0.6?'end':'start')+'">'+k.label+'</text>'});
+  s+='</svg>';
+  host.innerHTML=s;
+}
+var AG={x0:40,mw:66,mh:44,gx:6,gy:28};
+function arraySVG(p,bos){
+  var W=bos?1000:500,Y0=bos?118:28,H=bos?520:300,s='',r,m,k;
+  var roofY=Y0+3*(AG.mh+AG.gy)-AG.gy+38;
+  s+='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+(bos?'Rooftop PV plant with combiner box, inverter and grid':'PV array of 3 strings by 6 modules')+'">';
+  s+='<defs><linearGradient id="'+p+'sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky)"/><stop offset="1" stop-color="var(--sky2)"/></linearGradient></defs>';
+  s+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+p+'sky)"/>';
+  if(bos){
+    s+='<g id="'+p+'-sun"><circle cx="0" cy="0" r="22" fill="var(--sunDisc)"/>';
+    for(k=0;k<8;k++){var a=k*Math.PI/4;s+='<line x1="'+(30*Math.cos(a)).toFixed(1)+'" y1="'+(30*Math.sin(a)).toFixed(1)+'" x2="'+(40*Math.cos(a)).toFixed(1)+'" y2="'+(40*Math.sin(a)).toFixed(1)+'" stroke="var(--sunDisc)" stroke-width="3" stroke-linecap="round"/>'}
+    s+='</g>';
+    s+='<g id="'+p+'-cloud" opacity="0"><ellipse cx="0" cy="0" rx="58" ry="20" fill="var(--cloud)"/><ellipse cx="-30" cy="-12" rx="30" ry="18" fill="var(--cloud)"/><ellipse cx="22" cy="-16" rx="34" ry="20" fill="var(--cloud)"/></g>';
+    s+='<g transform="translate(486,78)"><rect x="-10" y="6" width="20" height="8" fill="var(--boxLine)"/><path d="M-9 6 A9 9 0 0 1 9 6 Z" fill="var(--sky2)" stroke="var(--boxLine)"/><text x="16" y="12" class="tk">pyranometer</text></g>';
+  }
+  s+='<rect x="0" y="'+roofY+'" width="'+W+'" height="'+(H-roofY)+'" fill="var(--roof)"/>';
+  for(k=0;k<W;k+=40)s+='<line x1="'+k+'" y1="'+roofY+'" x2="'+(k-30)+'" y2="'+H+'" stroke="var(--roofLine)" stroke-width="1"/>';
+  var xR=AG.x0+6*(AG.mw+AG.gx)-AG.gx;
+  s+='<rect x="'+(AG.x0-10)+'" y="'+(Y0-8)+'" width="6" height="'+(roofY-Y0+10)+'" fill="var(--frame)"/><rect x="'+(xR+4)+'" y="'+(Y0-8)+'" width="6" height="'+(roofY-Y0+10)+'" fill="var(--frame)"/>';
+  for(r=0;r<3;r++){
+    var y=Y0+r*(AG.mh+AG.gy);
+    s+='<rect x="'+(AG.x0-10)+'" y="'+(y+AG.mh+4)+'" width="'+(xR-AG.x0+20)+'" height="4" fill="var(--frame)"/>';
+    s+='<text x="'+(AG.x0-14)+'" y="'+(y+AG.mh/2+4)+'" text-anchor="end" class="tk" style="font-weight:600">S'+(r+1)+'</text>';
+    for(m=0;m<6;m++){
+      var x=AG.x0+m*(AG.mw+AG.gx),id=p+'-m-'+r+'-'+m;
+      s+='<g id="'+id+'"><rect class="mfr" x="'+x+'" y="'+y+'" width="'+AG.mw+'" height="'+AG.mh+'" rx="1.5" fill="var(--cell)" stroke="var(--frame)" stroke-width="2"/>';
+      for(k=1;k<12;k++)s+='<line x1="'+(x+k*AG.mw/12).toFixed(1)+'" y1="'+y+'" x2="'+(x+k*AG.mw/12).toFixed(1)+'" y2="'+(y+AG.mh)+'" stroke="var(--cellLine)" stroke-width="0.6"/>';
+      s+='<line x1="'+x+'" y1="'+(y+AG.mh/2)+'" x2="'+(x+AG.mw)+'" y2="'+(y+AG.mh/2)+'" stroke="var(--cellLine)" stroke-width="0.6"/>';
+      for(k=0;k<3;k++){
+        var by=y+k*AG.mh/3;
+        s+='<rect class="mir" x="'+(x+1)+'" y="'+(by+0.5).toFixed(1)+'" width="'+(AG.mw-2)+'" height="'+(AG.mh/3-1).toFixed(1)+'" fill="#000" opacity="0"/>';
+        s+='<rect class="msh" x="'+x+'" y="'+by.toFixed(1)+'" width="'+AG.mw+'" height="'+(AG.mh/3).toFixed(1)+'" fill="var(--shade)" opacity="0"/>';
+        s+='<rect class="mdi" x="'+(x+AG.mw-4)+'" y="'+(by+2).toFixed(1)+'" width="4" height="'+(AG.mh/3-4).toFixed(1)+'" fill="var(--sunDisc)" opacity="0"/>';
+      }
+      s+='<rect class="mll" x="'+x+'" y="'+y+'" width="'+AG.mw+'" height="'+AG.mh+'" fill="none" stroke="var(--bad)" stroke-width="3" stroke-dasharray="4 3" opacity="0"/>';
+      s+='<circle class="mhs" cx="'+(x+AG.mw*0.3)+'" cy="'+(y+AG.mh/2)+'" r="6" fill="#fbe96b" opacity="0"/></g>';
+    }
+  }
+  if(bos){
+    var cx=560,cy=140;
+    s+='<g transform="translate(46,'+(roofY+8)+')"><text class="tk" x="0" y="14">Raised table: light reflected from the roof reaches the rear side</text>';
+    s+='<line x1="10" y1="80" x2="200" y2="80" stroke="var(--roofLine)" stroke-width="3"/><line x1="40" y1="70" x2="150" y2="30" stroke="var(--cell)" stroke-width="7" stroke-linecap="round"/><line x1="140" y1="34" x2="140" y2="80" stroke="var(--frame)" stroke-width="3"/><line x1="50" y1="67" x2="50" y2="80" stroke="var(--frame)" stroke-width="3"/>';
+    s+='<path d="M175 0 L120 38" stroke="var(--sunDisc)" stroke-width="2" marker-end="url(#'+p+'ar)"/><path d="M95 78 L88 58" stroke="var(--sunDisc)" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#'+p+'ar)"/><path d="M118 78 L112 50" stroke="var(--sunDisc)" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#'+p+'ar)"/>';
+    s+='<text class="tk" x="182" y="10">front</text><text class="tk" x="160" y="74">rear (albedo)</text></g>';
+    s+='<defs><marker id="'+p+'ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sunDisc)"/></marker></defs>';
+    for(r=0;r<3;r++){
+      var ys=Y0+r*(AG.mh+AG.gy)+AG.mh/2,yc=cy+24+r*26,d='M'+xR+' '+ys+' H'+(520+r*8)+' V'+yc+' H'+cx;
+      s+='<path d="'+d+'" class="flow" stroke="var(--cable)" stroke-width="5" fill="none"/>';
+      s+='<path id="'+p+'-f'+r+'" d="'+d+'" class="flow" stroke="var(--s'+(r+1)+')" stroke-width="4" stroke-dasharray="1 13"/>';
+      s+='<circle cx="'+(xR+24)+'" cy="'+ys+'" r="7" fill="none" stroke="var(--ink)" stroke-width="2"/>';
+      s+='<text id="'+p+'-l'+r+'" x="'+(xR+38)+'" y="'+(ys-8)+'" class="tk" style="font-weight:600"></text>';
+    }
+    s+='<text x="'+(xR+16)+'" y="'+(Y0-14)+'" class="tk">current sensors</text>';
+    s+='<rect x="'+cx+'" y="'+cy+'" width="96" height="120" rx="6" fill="var(--boxFill)" stroke="var(--boxLine)" stroke-width="2"/>';
+    s+='<text x="'+(cx+48)+'" y="'+(cy-8)+'" text-anchor="middle" class="tk" style="font-weight:600">Combiner box</text>';
+    for(r=0;r<3;r++){var fy=cy+20+r*26;s+='<rect x="'+(cx+10)+'" y="'+(fy-2)+'" width="22" height="8" rx="2" fill="none" stroke="var(--boxLine)"/><line x1="'+(cx+10)+'" y1="'+(fy+2)+'" x2="'+(cx+32)+'" y2="'+(fy+2)+'" stroke="var(--boxLine)"/><text x="'+(cx+36)+'" y="'+(fy+5)+'" class="tk">fuse</text>'}
+    s+='<text x="'+(cx+10)+'" y="'+(cy+100)+'" class="tk">SPD · DC isolator</text>';
+    var dcd='M'+(cx+96)+' '+(cy+50)+' H 740';
+    s+='<path d="'+dcd+'" class="flow" stroke="var(--cable)" stroke-width="7"/><path id="'+p+'-fdc" d="'+dcd+'" class="flow" stroke="var(--cur)" stroke-width="5" stroke-dasharray="1 13"/>';
+    s+='<text id="'+p+'-ldc" x="'+(cx+102)+'" y="'+(cy+38)+'" class="tk" style="font-weight:600"></text>';
+    s+='<rect x="740" y="'+(cy-6)+'" width="104" height="128" rx="8" fill="var(--boxFill)" stroke="var(--boxLine)" stroke-width="2"/>';
+    s+='<text x="792" y="'+(cy-14)+'" text-anchor="middle" class="tk" style="font-weight:600">Inverter 10 kW</text>';
+    s+='<rect x="752" y="'+(cy+6)+'" width="80" height="40" rx="3" fill="var(--cell)"/><text id="'+p+'-linv" x="792" y="'+(cy+24)+'" text-anchor="middle" style="fill:#9EE6B8;font-size:10px"></text><text id="'+p+'-linv2" x="792" y="'+(cy+38)+'" text-anchor="middle" style="fill:#9EE6B8;font-size:10px"></text>';
+    s+='<text x="792" y="'+(cy+70)+'" text-anchor="middle" class="tk">MPPT · DC → AC</text>';
+    var acd='M844 '+(cy+50)+' H 912';
+    s+='<path d="'+acd+'" class="flow" stroke="var(--cable)" stroke-width="7"/><path id="'+p+'-fac" d="'+acd+'" class="flow" stroke="var(--sun)" stroke-width="5" stroke-dasharray="1 13"/>';
+    s+='<text id="'+p+'-lac" x="850" y="'+(cy+38)+'" class="tk" style="font-weight:600"></text>';
+    s+='<g transform="translate(940,'+(cy+60)+')" stroke="var(--boxLine)" stroke-width="2" fill="none"><path d="M-24 60 L-6 -50 L6 -50 L24 60"/><path d="M-30 -30 H30 M-22 0 H22"/><path d="M-14 -50 L0 -66 L14 -50"/></g>';
+    s+='<text x="940" y="'+(cy+138)+'" text-anchor="middle" class="tk">grid / building</text>';
+    s+='<rect x="740" y="'+(cy+160)+'" width="104" height="44" rx="6" fill="var(--boxFill)" stroke="var(--boxLine)" stroke-dasharray="4 3"/><text x="792" y="'+(cy+178)+'" text-anchor="middle" class="tk">data logger</text><text x="792" y="'+(cy+193)+'" text-anchor="middle" class="tk">G, T, V, I</text>';
+    s+='<path d="M'+(xR+24)+' '+(Y0+3*(AG.mh+AG.gy))+' V '+(cy+182)+' H 740" fill="none" stroke="var(--muted)" stroke-dasharray="3 4"/>';
+  }
+  s+='</svg>';
+  return s;
+}
+function paintArray(p,S,A,V,opt){
+  opt=opt||{};
+  var map=bypassMap(A,V),Gfull=A.G+MOD.phi*A.Gr;
+  for(var r=0;r<3;r++){
+    var st=A.strings[r];
+    for(var m=0;m<6;m++){
+      var g=document.getElementById(p+'-m-'+r+'-'+m);if(!g)continue;
+      var sh=$$('.msh',g),ir=$$('.mir',g),di=$$('.mdi',g),ll=$('.mll',g),hs=$('.mhs',g);
+      var bridged=m>=6-(st.ll||0);
+      for(var k=0;k<3;k++){
+        var f=S.sh[r][m][k];
+        sh[k].setAttribute('opacity',(Math.min(0.85,f*0.9)+(st.open?0.35:0)).toFixed(2));
+        var sub=st.mods[m].subs[k];
+        var Tsec=A.Ta+(A.T-A.Ta)*clamp(sub.geff/(Gfull||1),0,1.2);
+        if(st.open||bridged)Tsec=A.T+3;
+        ir[k].setAttribute('fill',irColor(Tsec));ir[k].setAttribute('opacity',opt.ir?'0.95':'0');
+        var on=map[r][m][k]&&!st.open;
+        di[k].setAttribute('opacity',on?'1':(sub.d==='short'?'0.5':'0'));
+        di[k].setAttribute('fill',sub.d==='short'?'var(--bad)':'var(--sunDisc)');
+      }
+      ll.setAttribute('opacity',bridged?'1':'0');
+      var hot=opt.hot&&opt.hot.s===r&&opt.hot.m===m;
+      if(hot){hs.setAttribute('opacity','1');hs.setAttribute('fill',opt.ir?irColor(opt.hot.T):'#F48A2C');hs.setAttribute('r',(4+clamp((opt.hot.T-50)/20,0,6)).toFixed(1));hs.setAttribute('cy',(+$('.mfr',g).getAttribute('y')+AG.mh*(opt.hot.k+0.5)/3).toFixed(1))}
+      else hs.setAttribute('opacity','0');
+    }
+  }
+  return map;
+}
+
+/* flows */
+function flowSet(list){return list.map(function(id){return {el:document.getElementById(id),off:0,v:0}}).filter(function(f){return f.el})}
+function flowStep(F,dt){F.forEach(function(f){f.off=(f.off-f.v*dt)%1400;f.el.style.strokeDashoffset=f.off.toFixed(1)})}
+function flowSpeed(f,amps,scale,widthBase){
+  if(!f)return;var a=Math.abs(amps);
+  f.v=REDUCE?0:(a<0.02?0:Math.sign(amps)*(18+scale*a));
+  f.el.setAttribute('opacity',a<0.02?'0.15':'1');
+  f.el.setAttribute('stroke-width',(widthBase+Math.min(3,a/6)).toFixed(1));
+}
+</script>
+<script>
+/* ===================== demo player ===================== */
+MOD.voc=CONFIG.module.voc;MOD.isc=CONFIG.module.isc;MOD.vmp=CONFIG.module.vmp;MOD.imp=CONFIG.module.imp;
+MOD.beta=CONFIG.module.beta/100;MOD.alpha=CONFIG.module.alpha/100;MOD.nmot=CONFIG.module.nmot;MOD.phi=CONFIG.module.bifaciality;
+IMPR=MOD.imp/MOD.isc;VMPR=MOD.vmp/MOD.voc;C2=(VMPR-1)/Math.log(1-IMPR);C1=(1-IMPR)*Math.exp(-VMPR/C2);
+var REC=/[?&]rec=1/.test(location.search);
+if(REC)document.body.classList.add('rec');
+var nMods=CONFIG.plant.strings*CONFIG.plant.perString,kWp=nMods*CONFIG.module.pmax/1000;
+
+function fitStage(){var f=$('#fit'),s=$('#stage');var k=f.clientWidth/1280;s.style.transform='scale('+k+')'}
+window.addEventListener('resize',fitStage);fitStage();
+
+/* ---------- scenario definitions ---------- */
+var BASE=CONFIG.sim;
+function scn(mod){var S=scenario({G:BASE.G,Ta:BASE.Ta,alb:BASE.alb});if(mod)mod(S);return S}
+var HOT=hotspot({G:BASE.G,Ta:BASE.Ta,wind:1,s:0.3,rsh:4,diode:'ok'});
+var SC={
+  healthy:{title:'Healthy plant',tag:['Healthy',''],mod:null,
+    pre:'<b>Healthy plant at noon.</b> 1000 W/m² on the front, roof light on the rear side. Current flows from all 3 strings to the inverter.',
+    post:function(R){return '<b>Result:</b> one clean power peak of '+f2(R.c.best.p/1000)+' kW at '+r0(R.c.best.v)+' V. This is the reference for every case that follows.'},
+    dx:function(R){return '<b>Reference.</b> Voc '+r0(R.c.voc)+' V, Isc '+f1(R.c.isc)+' A, fill factor '+r0(R.c.ff*100)+' %. Every string carries '+f1(R.Is[0])+' A.'}},
+  shade:{title:'Partial shading on 3 modules',tag:['Shading','warn'],mod:function(S){[0,1,2].forEach(function(m){S.sh[0][m]=[0.8,0.8,0.8]})},
+    pre:'<b>A shadow falls on 3 modules of string 1</b> (80 % dark). The shaded cells can no longer carry the full string current.',
+    post:function(R){return '<b>Result:</b> the P–V curve now has '+R.c.peaks+' peaks and power drops from '+f2(R.h.best.p/1000)+' to '+f2(R.c.best.p/1000)+' kW: <b>'+f1(R.loss)+' % loss</b> from shade on only '+r0(300/nMods)+' % of the modules.'},
+    dx:function(R){return '<b>Diagnosis:</b> a step in the I–V curve. At the best point string 1 is held to '+f1(R.Is[0])+' A by the shaded modules; on the left peak their bypass diodes would conduct instead. Check by I–V trace (IEC 62446-1) and IR.'}},
+  dust:{title:'Dust on all modules (15 %)',tag:['Soiling','warn'],mod:function(S){S.soil=0.15},
+    pre:'<b>Dust covers every module</b> and blocks about 15 % of the light on the front side.',
+    post:function(R){return '<b>Result:</b> the curve keeps its shape but shrinks: current falls, voltage hardly moves. Power '+f2(R.c.best.p/1000)+' kW, <b>'+f1(R.loss)+' % loss</b>.'},
+    dx:function(R){return '<b>Diagnosis:</b> all strings lose the same current ('+f1(R.Is[0])+' A), single peak, Voc nearly normal. Fix: cleaning. Track with a soiling ratio (IEC 61724-1).'}},
+  hot:{title:'Hot spot on one cell',tag:['Hot spot','bad'],mod:function(S){S.sh[1][3][1]=0.3},ir:true,
+    pre:'<b>Thermal camera view.</b> A leaf covers 30 % of one cracked cell in string 2; the cell is driven into reverse and turns power into heat.',
+    post:function(R){return '<b>Result:</b> the I–V curve barely changes ('+f1(R.loss)+' % loss), but the cell reaches about <b>'+r0(HOT.Tss)+' °C</b> against '+r0(HOT.Tm)+' °C around it, above 85 °C in '+f1(HOT.tTo(85))+' min.'},
+    dx:function(R){return '<b>Diagnosis:</b> ΔT = '+r0(HOT.Tss-HOT.Tm)+' K, far above the +10 K IR flag. Only thermography finds it (IEC TS 62446-3, ≥ 600 W/m²). Damage risk above 150 °C.'}},
+  ll:{title:'Line-line fault in string 3',tag:['Fault','bad'],mod:function(S){S.ll={s:2,k:2}},
+    pre:'<b>Insulation failure bridges 2 modules of string 3</b> (red dashed). That string can no longer reach the array voltage.',
+    post:function(R){return '<b>Result:</b> the inverter is dragged down to '+r0(R.c.best.v)+' V to keep string 3 working, so the healthy strings sit far below their best voltage. Power '+f2(R.c.best.p/1000)+' kW: <b>'+f1(R.loss)+' % loss</b>.'},
+    dx:function(R){return '<b>Diagnosis:</b> string 3 Voc '+r0(R.chk[2].voc)+' V instead of '+r0(R.chk[0].voc)+' V. Above that voltage the other strings drive current backwards into it, so string fuses sized to IEC 62548 must clear it; inspect the insulation.'}},
+  dshort:{title:'Bypass diode shorted',tag:['Fault','bad'],mod:function(S){S.diode['1-2-1']='short'},
+    pre:'<b>A bypass diode in string 2 fails short</b> (red bar). One third of that module is cut out of the circuit, day and night.',
+    post:function(R){return '<b>Result:</b> string 2 voltage drops by about '+r0(R.chk[0].voc-R.chk[1].voc)+' V, the strings no longer match, and power falls to '+f2(R.c.best.p/1000)+' kW: <b>'+f1(R.loss)+' % loss</b>.'},
+    dx:function(R){return '<b>Diagnosis:</b> one string Voc low by one substring ('+r0(R.chk[1].voc)+' V vs '+r0(R.chk[0].voc)+' V), no shade seen. Confirm with a diode test (IEC 62979) and replace the junction box.'}},
+  open:{title:'Open string (blown fuse / loose plug)',tag:['Fault','bad'],mod:function(S){S.openStr=0},
+    pre:'<b>String 1 opens</b>: a blown fuse or a pulled-out MC4 plug. No current can flow in that string.',
+    post:function(R){return '<b>Result:</b> the array current drops by one third and power falls to '+f2(R.c.best.p/1000)+' kW: <b>'+f1(R.loss)+' % loss</b>. The voltage stays normal.'},
+    dx:function(R){return '<b>Diagnosis:</b> string 1 current = 0 A while the others carry '+f1(R.Is[1])+' A. Check the string fuse and connectors (IEC 62446-1 continuity test).'}}
+};
+var ORDER=['healthy','shade','dust','hot','ll','dshort','open'];
+function runCase(k){
+  var d=SC[k],S=scn(d.mod),A=build(S),c=arrCurve(A,180),Ah=build(scn(null)),h=arrCurve(Ah,180);
+  var V=c.best.v,Is=A.strings.map(function(st){return strI(st,V)});
+  return {S:S,A:A,c:c,h:h,V:V,Is:Is,loss:Math.max(0,100*(1-c.best.p/h.best.p)),chk:strChecks(A),nb:0};
+}
+function strChecks(A){return A.strings.map(function(st){if(st.open)return{voc:0};return{voc:strV(st,0)}})}
+var RES={};ORDER.forEach(function(k){RES[k]=runCase(k)});
+
+/* ---------- static scene content ---------- */
+(function(){
+  var m=CONFIG.module;
+  $('#kvMod').innerHTML=kv([['Rated power',m.pmax+' W'],['Voc / Isc',m.voc+' V / '+m.isc+' A'],['Vmp / Imp',m.vmp+' V / '+m.imp+' A'],['sep'],['Cells',m.cells],['Bifaciality',m.bifaciality.toFixed(2)],['Temp. coeff. Pmax',''+(m.beta)+' %/°C'],['NMOT',m.nmot+' °C'],['sep'],['Lab reading',CONFIG.labVoltage]]);
+  $('#kvPlant').innerHTML=kv([['Modules',nMods+' × '+m.pmax+' W'],['Layout',CONFIG.plant.strings+' strings × '+CONFIG.plant.perString],['DC rating',f1(kWp)+' kWp'],['String Voc (25 °C)',r0(m.voc*CONFIG.plant.perString)+' V'],['String Isc',m.isc+' A'],['Array Isc',r0(m.isc*CONFIG.plant.strings)+' A'],['sep'],['Inverter',CONFIG.plant.inverter],['Site',CONFIG.plant.site]]);
+  var L=CONFIG.load,rmpp=m.vmp/m.imp;
+  $('#kvLoad').innerHTML='<div class="kv">'+kv([['Current needed','≥ '+r0(m.isc*1.15+3.9)+' A'],['Voltage needed','≥ 60 V'],['Power needed','≥ '+r0(m.pmax*1.25)+' W'],['R at max power',f1(rmpp)+' Ω'],['sep']])+'</div>'+
+    '<p style="margin:8px 0 4px;font-size:15px"><span class="pill">Use</span> '+L.eload+'</p><p style="margin:4px 0;font-size:15px"><span class="pill">or</span> '+L.rheo+'</p>'+
+    '<p style="margin:4px 0;font-size:15px"><span class="pill bad">Too small</span> '+L.present.text+' (Isc '+m.isc+' A)</p>'+
+    '<p style="margin:10px 0 0;font-size:13.5px;color:var(--muted)">'+L.string+'<br>'+L.array+'</p>';
+  /* lab */
+  var P=CONFIG.lab.points;
+  $('#labWhen').textContent=CONFIG.lab.when;
+  var t='<tr><th class="l">#</th><th>V (V)</th><th>I (A)</th><th>P (W)</th><th>R = V/I (Ω)</th></tr>';
+  P.forEach(function(p,i){t+='<tr'+(i===0?' class="hl"':'')+'><td class="l">'+(i+1)+'</td><td>'+f2(p[0])+'</td><td>'+f2(p[1])+'</td><td>'+f1(p[0]*p[1])+'</td><td>'+f1(p[0]/p[1])+'</td></tr>'});
+  $('#labTbl').innerHTML=t;
+  $('#labNote').textContent=CONFIG.lab.note;
+  var it='<tr><th class="l">Point</th><th class="l">Date</th><th>G (W/m²)</th><th>V</th><th>I</th><th>P (W)</th></tr>';
+  CONFIG.lab.irr.forEach(function(r){it+='<tr><td class="l">'+r[0]+'</td><td class="l">'+r[1]+'</td><td>'+r[2]+'</td><td>'+f1(r[3])+'</td><td>'+f2(r[4])+'</td><td>'+r0(r[3]*r[4])+'</td></tr>'});
+  $('#irrTbl').innerHTML=it;
+  $('#plantBox').innerHTML=arraySVG('dm',true);
+  /* summary */
+  var mx=Math.max.apply(null,ORDER.map(function(k){return RES[k].loss}));
+  var sb='';ORDER.slice(1).forEach(function(k){var l=RES[k].loss;sb+='<div class="sbar"><span>'+SC[k].title.replace(/ \(.*\)/,'')+'</span><div class="tr"><div class="fl" data-w="'+(100*l/Math.max(mx,1)).toFixed(1)+'" style="background:'+(l>10?'var(--bad)':l>3?'var(--sun)':'var(--warn)')+'"></div></div><span class="v">'+f1(l)+' %</span></div>'});
+  $('#sumBars').innerHTML=sb;
+  $('#sumTbl').innerHTML='<tr><th class="l">Problem</th><th class="l">Best check</th></tr>'+
+    [['Partial shading','I–V trace + IR'],['Dust','Soiling ratio, cleaning'],['Hot spot','IR camera only'],['Line-line fault','String Voc, reverse current'],['Diode shorted','String Voc, diode test'],['Open string','String current = 0']].map(function(r){return '<tr><td class="l">'+r[0]+'</td><td class="l">'+r[1]+'</td></tr>'}).join('');
+  $('#endLine').textContent=nMods+' × '+CONFIG.module.pmax+' W bifacial modules · '+CONFIG.plant.strings+' strings × '+CONFIG.plant.perString+' · '+f1(kWp)+' kWp · results computed live from the module ratings.';
+})();
+function kv(rows){return rows.map(function(r){return r[0]==='sep'?'<span class="sep"></span>':'<span>'+r[0]+'</span><b>'+r[1]+'</b>'}).join('')}
+
+/* ---------- drawing helpers ---------- */
+var FL=flowSet(['dm-f0','dm-f1','dm-f2','dm-fdc','dm-fac']);
+function paintPlant(R,ir){
+  var hs=ir?{s:1,m:3,k:1,T:HOT.Tss}:null;
+  var map=paintArray('dm',R.S,R.A,R.V,{ir:!!ir,hot:hs});R.nb=countBypass(map);
+  var Idc=R.Is.reduce(function(a,b){return a+b},0),Pdc=R.c.best.p,Pac=Pdc*ETA;
+  for(var r=0;r<3;r++){flowSpeed(FL[r],R.Is[r],7,3);var t=$('#dm-l'+r);t.textContent='S'+(r+1)+' '+f1(R.Is[r])+' A';t.style.fill=R.Is[r]<-0.05?'var(--bad)':R.Is[r]<0.05?'var(--muted)':'var(--ink)'}
+  flowSpeed(FL[3],Idc,2.6,4);flowSpeed(FL[4],Pac/230,1.6,4);
+  $('#dm-ldc').textContent=r0(R.V)+' V · '+f1(Idc)+' A';$('#dm-linv').textContent='MPPT '+r0(R.V)+' V';$('#dm-linv2').textContent='DC '+f1(Pdc/1000)+' kW';$('#dm-lac').textContent=f1(Pac/1000)+' kW AC';
+  $('#dm-sun').setAttribute('transform','translate(363,45)');
+  $('#pTiles').innerHTML=
+    tile('DC power',f2(Pdc/1000)+' kW',r0(R.V)+' V × '+f1(Idc)+' A')+
+    tile('String currents',R.Is.map(function(x){return f1(x)}).join(' / ')+' A','S1 / S2 / S3',R.Is.some(function(x){return x<-0.05})?'bad':'')+
+    tile('Bypass diodes on',R.nb,R.nb?'of 54':'none','')+
+    tile(ir?'Hot cell':'Cell temperature',r0(ir?HOT.Tss:R.A.T)+' °C','air '+BASE.Ta+' °C',ir?'bad':'');
+}
+function tile(l,v,s,c){return '<div class="tile '+(c||'')+'"><span>'+l+'</span><b>'+v+'</b>'+(s!=null?'<small>'+s+'</small>':'')+'</div>'}
+function drawLines(host){
+  $$('path.ln',host).forEach(function(p){if(p.classList.contains('gh'))return;var L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L;p.getBoundingClientRect();p.classList.add('draw');p.style.strokeDashoffset=0});
+}
+function resChart(R,showNow){
+  var h=R.h,c=R.c,vx=Math.ceil(h.voc/50)*50,imax=Math.ceil(Math.max(h.isc,1)*1.15/5)*5,pmax=Math.ceil(h.best.p*1.15/1000)*1000;
+  var ser=[{pts:h.pts,cls:'gh'},{pts:h.pw,cls:'gh',ax:'y2'}];
+  if(showNow)ser.push({pts:c.pts,cls:'cur'},{pts:c.pw,cls:'pow',ax:'y2'});
+  var marks=[{x:h.best.v,y:h.best.p,ax:'y2',cls:'ring',label:showNow?'':'healthy '+f2(h.best.p/1000)+' kW'}];
+  if(showNow)marks.push({x:c.best.v,y:c.best.p,ax:'y2',cls:'pow',label:f2(c.best.p/1000)+' kW',below:c.best.p>h.best.p*0.9});
+  var host=$('#resChart');
+  chart(host,{id:'rc',h:262,xmax:vx,xt:6,ymax:imax,y2:{max:pmax,label:'Power (W)',c:'p'},xlabel:'Array voltage (V)',ylabel:'Current (A)',ylc:'c',aria:'Healthy and present I–V and P–V curves',series:ser,marks:showNow?marks:marks});
+  if(showNow)drawLines(host);
+}
+function bigTiles(R,show){
+  if(!show){$('#bigTiles').innerHTML=tile('Healthy power',f2(R.h.best.p/1000)+' kW','reference')+tile('Power now','…','measuring')+tile('Loss','…','');return}
+  var l=R.loss;
+  $('#bigTiles').innerHTML=tile('Healthy power',f2(R.h.best.p/1000)+' kW','reference')+tile('Power now','<span data-cu="'+(R.c.best.p/1000)+'" data-d="2">0.00</span> kW',R.c.peaks+(R.c.peaks>1?' peaks':' peak'),R.c.peaks>1?'warn':'')+tile('Loss','<span data-cu="'+l+'" data-d="1">0.0</span> %',r0(R.h.best.p-R.c.best.p)+' W lost',l>10?'bad':l>2?'warn':'good');
+  countUp($('#bigTiles'));
+}
+function countUp(host){
+  $$('[data-cu]',host).forEach(function(e){var tgt=+e.dataset.cu,d=+e.dataset.d,t0=performance.now();
+    (function st(now){var k=Math.min(1,(now-t0)/900),v=tgt*(1-Math.pow(1-k,3));e.textContent=v.toFixed(d);if(k<1)requestAnimationFrame(st)})(t0)});
+}
+function hotChart(){
+  var pts=[],sh=[];for(var t=0;t<=60;t+=1){pts.push([t,HOT.Tat(t)]);sh.push([t,HOT.Tm])}
+  var host=$('#resChart');
+  chart(host,{id:'hc',h:262,xmax:60,xt:6,ymin:20,ymax:Math.ceil((HOT.Tss+15)/20)*20,xlabel:'Minutes after the leaf lands',ylabel:'Cell temperature (°C)',aria:'Hot cell temperature over time',
+    series:[{pts:sh,cls:'gh'},{pts:pts,cls:'bad'}],
+    hlines:[{y:85,cls:'warn',label:'85 °C (IEC 61215 limit)',left:true},{y:150,cls:'bad',label:'150 °C damage',left:true},{y:HOT.Tm+10,cls:'cur',label:'+10 K IR flag',left:true}],
+    marks:[{x:60,y:HOT.Tat(60),cls:'bad',label:r0(HOT.Tat(60))+' °C'}]});
+  drawLines(host);
+}
+
+/* ---------- timeline ---------- */
+var cur=null,curRes=null;
+function setTop(title,tag,step){$('#tTitle').textContent=title;var g=$('#tTag');if(tag){g.hidden=false;g.textContent=tag[0];g.className='tag '+(tag[1]||'')}else g.hidden=true;$('#tStep').textContent=step||''}
+function cap(h){var c=$('#cap');if(!h){c.classList.add('hide');return}c.innerHTML='<div>'+h+'</div>';c.classList.remove('hide')}
+function showScene(id){$$('.scene').forEach(function(s){s.classList.toggle('on',s.id===id)})}
+function caseScene(k,i){
+  var d=SC[k],dur=k==='healthy'?6000:7600;
+  return {id:k,label:d.tag[0]==='Fault'?d.title.split(' ')[0]+' '+(d.title.split(' ')[1]||''):d.tag[0],dur:dur,ev:[
+    [0,function(){showScene('s-sc');var R=RES[k];curRes=R;setTop(d.title,d.tag,'Case '+(i+1)+' of '+ORDER.length);
+      paintPlant(R,d.ir);$('#resHead').textContent=k==='healthy'?'Result: healthy I–V and P–V':'Result: healthy vs '+d.tag[0].toLowerCase();
+      $('#resState').textContent='healthy reference';$('#resState').className='';
+      $('#resLeg').style.visibility=d.ir?'hidden':'visible';if(d.ir){hotChart0()}else resChart(R,false);
+      if(!d.ir)bigTiles(R,false);$('#dx').classList.remove('on');cap(d.pre)}],
+    [2300,function(){var R=RES[k];$('#resState').textContent='result now';$('#resState').className='live';
+      if(d.ir){hotChart();$('#bigTiles').innerHTML=tile('Hot cell','<span data-cu="'+HOT.Tss+'" data-d="0">0</span> °C','steady state','bad')+tile('Neighbours',r0(HOT.Tm)+' °C','ΔT '+r0(HOT.Tss-HOT.Tm)+' K','warn')+tile('Power loss','<span data-cu="'+R.loss+'" data-d="1">0.0</span> %','I–V hardly changes','good');countUp($('#bigTiles'))}
+      else{resChart(R,true);bigTiles(R,true)}
+      cap(d.post(R))}],
+    [4300,function(){$('#dx').innerHTML=SC[k].dx(RES[k]);$('#dx').classList.add('on')}]
+  ]};
+}
+function hotChart0(){
+  var host=$('#resChart');
+  chart(host,{id:'hc0',h:262,xmax:60,xt:6,ymin:20,ymax:Math.ceil((HOT.Tss+15)/20)*20,xlabel:'Minutes after the leaf lands',ylabel:'Cell temperature (°C)',series:[],hlines:[{y:85,cls:'warn',label:'85 °C (IEC 61215 limit)',left:true},{y:150,cls:'bad',label:'150 °C damage',left:true}]});
+  $('#bigTiles').innerHTML=tile('Hot cell','…','measuring','')+tile('Neighbours','…','')+tile('Power loss','…','');
+}
+var SCENES=[
+  {id:'title',label:'Title',dur:4200,ev:[[0,function(){showScene('s-title');cap(null)}]]},
+  {id:'rate',label:'Ratings',dur:7000,ev:[[0,function(){showScene('s-rate');setTop('Ratings: module, plant and test load',null,'');cap('<b>One module: '+CONFIG.module.pmax+' W, '+CONFIG.module.vmp+' V × '+CONFIG.module.imp+' A at maximum power.</b> To sweep its full I–V curve the load must carry the short-circuit current of '+CONFIG.module.isc+' A with margin, so a 30 A, 1 kW electronic load is used.')}]]},
+  {id:'lab',label:'Lab data',dur:8500,ev:[[0,function(){showScene('s-lab');setTop('Measured data: IIT Gandhinagar lab',null,'');labChart();cap('<b>Real measurement on one rooftop module.</b> With the rheostat at 13–23 Ω the module sits near open circuit: <b>45–46 V</b> and only 2–3.5 A (95–160 W).')}],
+    [4300,function(){cap('<b>Why so little power?</b> Maximum power needs about '+f1(CONFIG.module.vmp/CONFIG.module.imp)+' Ω; the old 20 Ω, 10 A rheostat cannot go there safely. The module was also dusty. Next: what each problem does on the full 10 kW plant.')}]]}
+];
+ORDER.forEach(function(k,i){SCENES.push(caseScene(k,i))});
+SCENES.push({id:'sum',label:'Summary',dur:7000,ev:[[0,function(){showScene('s-sum');setTop('Summary: what each problem costs',null,'');cap('<b>Shading and faults cost the most power;</b> a hot spot costs almost nothing in power but can burn the module, so it needs an IR check.');setTimeout(function(){$$('#sumBars .fl').forEach(function(f){f.style.width=f.dataset.w+'%'})},250)}]]});
+SCENES.push({id:'end',label:'End',dur:4300,ev:[[0,function(){showScene('s-end');cap(null)}]]});
+function labChart(){
+  var P=CONFIG.lab.points,host=$('#labChart');
+  chart(host,{id:'lb',h:250,xmin:44.8,xmax:46.4,xt:4,ymax:4,y2:{min:0,max:200,label:'Power (W)',c:'p'},xlabel:'Module voltage (V)',ylabel:'Current (A)',ylc:'c',aria:'Measured operating points',
+    series:[{pts:P.slice().sort(function(a,b){return a[0]-b[0]}),cls:'cur'},{pts:P.map(function(p){return [p[0],p[0]*p[1]]}).sort(function(a,b){return a[0]-b[0]}),cls:'pow',ax:'y2'}],
+    scatter:[{pts:P,cls:'cur',r:4.5}],
+    marks:[{x:P[0][0],y:P[0][0]*P[0][1],ax:'y2',cls:'pow',label:r0(P[0][0]*P[0][1])+' W'}]});
+  drawLines(host);
+}
+var TOTAL=SCENES.reduce(function(a,s){return a+s.dur},0);
+
+var idx=0,local=0,fired=0,playing=true,last=performance.now();
+function enter(i,at){idx=i;local=at||0;fired=0;var s=SCENES[i];
+  while(fired<s.ev.length&&s.ev[fired][0]<=local){s.ev[fired][1]();fired++}
+  $$('#dots button').forEach(function(b,j){b.setAttribute('aria-current',j===i?'true':'false')})}
+function frame(now){
+  var dt=Math.min(100,now-last);last=now;
+  if(playing){local+=dt;var s=SCENES[idx];
+    while(fired<s.ev.length&&s.ev[fired][0]<=local){s.ev[fired][1]();fired++}
+    if(local>=s.dur){if(idx<SCENES.length-1)enter(idx+1,0);else{playing=false;local=s.dur;$('#bPlay').textContent='Play again';window.__done=true}}}
+  var el=0;for(var i=0;i<idx;i++)el+=SCENES[i].dur;$('#prog').style.width=(100*(el+local)/TOTAL).toFixed(2)+'%';
+  flowStep(FL,dt/1000);
+  requestAnimationFrame(frame);
+}
+SCENES.forEach(function(s,i){var b=el('<button type="button">'+s.label+'</button>');b.addEventListener('click',function(){enter(i,0);playing=true;$('#bPlay').textContent='Pause'});$('#dots').appendChild(b)});
+$('#bPlay').addEventListener('click',function(){if(!playing&&idx===SCENES.length-1&&local>=SCENES[idx].dur){enter(0,0)}playing=!playing;$('#bPlay').textContent=playing?'Pause':'Play'});
+$('#bRe').addEventListener('click',function(){enter(0,0);playing=true;$('#bPlay').textContent='Pause'});
+window.__total=TOTAL;
+if(REC){playing=false;window.__start=function(){last=performance.now();enter(0,0);playing=true}}else enter(0,0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

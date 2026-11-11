@@ -1,0 +1,1729 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>VidyutAI Solar PV Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: instrument-panel feel kept from the first PV Lab. Title strip, tab switch, then controls beside live drawings and plots (stacks on phones). */
+:root{
+  --bg:#F1F5F8; --panel:#FFFFFF; --ink:#0F2230; --muted:#587080; --line:#D3DDE5; --grid:#E4EBF0;
+  --sun:#B96A00; --sunSoft:#FBEBD0; --cur:#0C7C87; --bad:#C23B3D; --good:#2A7B4C; --warn:#A86A00;
+  --s1:#2F6FB0; --s2:#8A4FB8; --s3:#2A8C6B;
+  --sky:#DCEBF5; --sky2:#EEF5FA; --roof:#D9CBB4; --roofLine:#C4B396; --frame:#9AA9B5; --cell:#1D3B5E; --cellLine:#34587F;
+  --shade:#1A1A1A; --cable:#4A5865; --sunDisc:#F2B33D; --cloud:#FFFFFF; --boxFill:#F6F8FA; --boxLine:#8A9AA8;
+  --f-display:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --f-data:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1520; --panel:#11202D; --ink:#E5EDF3; --muted:#8CA3B3; --line:#233746; --grid:#1A2D3A;
+    --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
+    --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
+    --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
+    --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1520; --panel:#11202D; --ink:#E5EDF3; --muted:#8CA3B3; --line:#233746; --grid:#1A2D3A;
+  --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
+  --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
+  --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
+  --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+*{box-sizing:border-box}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
+h2{font-size:17px;font-weight:600}
+h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.lede{color:var(--muted);margin:6px 0 0;max-width:70ch}
+.spec{font-family:var(--f-data);font-size:12px;color:var(--muted);margin-top:10px}
+.credit{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);display:grid;gap:2px}
+.credit b{color:var(--ink);font-weight:600}
+.credit .proj{font:600 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--sun)}
+.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:4px;margin:18px 0;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.tabs button{min-width:0;padding:9px 6px;border:0;border-radius:7px;background:transparent;color:var(--muted);font:500 14px var(--f-body);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:880px){.grid{grid-template-columns:minmax(0,300px) minmax(0,1fr);align-items:start}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.controls{display:flex;flex-direction:column;gap:13px}
+.viz{display:flex;flex-direction:column;gap:14px;min-width:0}
+.sl{display:block}
+.sl-top{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:2px}
+.sl output{font-family:var(--f-data);font-weight:500;color:var(--sun)}
+input[type=range]{width:100%;accent-color:var(--sun);margin:0;height:28px}
+select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:500 13px var(--f-body)}
+.selrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px}
+.selrow label{font-size:12px;color:var(--muted);display:grid;gap:3px}
+.sl-hint{font-size:12px;color:var(--muted);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:500 13px var(--f-body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--sun);border-color:var(--sun);color:var(--panel)}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.btn{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:500 13px var(--f-body);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn[aria-pressed="true"]{background:var(--sunSoft);border-color:var(--sun)}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.toggle input{width:18px;height:18px;accent-color:var(--sun);margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.legend i.cur{border-color:var(--cur)} .legend i.pow{border-color:var(--sun)} .legend i.bad{border-color:var(--bad)}
+.legend i.gh{border-color:var(--muted);border-top-style:dashed;border-top-width:2px}
+.legend i.s1{border-color:var(--s1)} .legend i.s2{border-color:var(--s2)} .legend i.s3{border-color:var(--s3)}
+svg{display:block;max-width:100%}
+svg text{font-family:var(--f-data);font-size:11px}
+.gl{stroke:var(--grid);stroke-width:1} .ax{stroke:var(--muted);stroke-width:1}
+.tk{fill:var(--muted)} .ttl{fill:var(--muted);font-size:11px}
+.ttl.c{fill:var(--cur)} .ttl.p{fill:var(--sun)}
+.ln{fill:none;stroke-width:2.2;stroke-linejoin:round}
+.ln.cur{stroke:var(--cur)} .ln.pow{stroke:var(--sun)} .ln.bad{stroke:var(--bad)} .ln.good{stroke:var(--good)}
+.ln.s1{stroke:var(--s1)} .ln.s2{stroke:var(--s2)} .ln.s3{stroke:var(--s3)}
+.ln.gh{stroke:var(--muted);stroke-width:1.6;stroke-dasharray:5 4;opacity:.8}
+.ln.thin{stroke-width:1.4}
+.ref{stroke:var(--muted);stroke-dasharray:4 4;stroke-width:1.2}
+.ref.bad{stroke:var(--bad)} .ref.warn{stroke:var(--warn)} .ref.cur{stroke:var(--cur)}
+.reflbl.bad{fill:var(--bad)} .reflbl.warn{fill:var(--warn)} .reflbl.cur{fill:var(--cur)}
+.mk{stroke:var(--panel);stroke-width:2}
+.mk.pow{fill:var(--sun)} .mk.cur{fill:var(--cur)} .mk.bad{fill:var(--bad)} .mk.good{fill:var(--good)}
+.mk.ring{fill:none;stroke:var(--ink);stroke-width:2}
+.dot{fill:var(--sun)} .sc{stroke:var(--panel);stroke-width:1}
+.sc.bad{fill:var(--bad)} .sc.cur{fill:var(--cur)}
+.mklbl{fill:var(--ink);font-size:11px}
+.stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(122px,1fr))}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-width:0}
+.stat span{display:block;font-size:12px;color:var(--muted)}
+.stat b{font:500 19px var(--f-data);font-variant-numeric:tabular-nums}
+.stat small{display:block;font:400 11px var(--f-data);color:var(--muted)}
+.stat.bad b{color:var(--bad)} .stat.good b{color:var(--good)} .stat.warn b{color:var(--warn)}
+.diag p{margin:6px 0 0}
+.diag .field{color:var(--muted);font-size:13px}
+.note{font-size:12px;color:var(--muted);margin:2px 0 0}
+.scene-wrap{position:relative}
+.caption{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--sunSoft);border:1px solid var(--sun);font-size:14px;min-height:46px}
+.caption b{font-family:var(--f-display)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-display);letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+td.num{font-family:var(--f-data);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font:500 12px var(--f-body);border:1px solid var(--line)}
+.pill.bad{color:var(--bad);border-color:var(--bad)} .pill.good{color:var(--good);border-color:var(--good)} .pill.warn{color:var(--warn);border-color:var(--warn)}
+.dx{display:grid;gap:8px}
+.dx-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.dx-head b{font:600 17px var(--f-display)}
+ul.plain{margin:6px 0 0;padding-left:18px}
+ul.plain li{margin:3px 0}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:42px 1fr 76px;align-items:center;gap:8px;font-size:13px}
+.bar .tr{height:12px;background:var(--grid);border-radius:6px;position:relative;overflow:hidden}
+.bar .fl{position:absolute;top:0;bottom:0;border-radius:6px}
+.bar .v{font-family:var(--f-data);text-align:right}
+.two{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.flow{fill:none;stroke-linecap:round}
+.irscale{display:flex;align-items:center;gap:8px;font:12px var(--f-data);color:var(--muted);margin-top:8px}
+.irscale i{flex:1;height:10px;border-radius:5px;background:linear-gradient(90deg,#140b34,#5b1a86,#c33b6e,#f48a2c,#fbe96b,#fffbe0)}
+ol.steps{margin:6px 0 0;padding-left:20px;display:grid;gap:8px;font-size:14px}
+ol.steps b{font-family:var(--f-display)}
+#suWin p,#suFix p{margin:0 0 8px;font-size:14px}
+#suPlan svg{width:100%;height:auto}
+pre.code{margin:6px 0 0;padding:12px;background:#0F2230;color:#D7E6F0;border-radius:8px;font:12.5px/1.5 var(--f-data);overflow:auto;max-height:420px;white-space:pre}
+.flowrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.fbox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);text-align:center}
+.fbox code,.note code{font-family:var(--f-data);font-size:12px;color:var(--sun)}
+.farr{color:var(--muted);font-size:18px}
+#suSeason{font-size:12px}#suSeason th,#suSeason td{padding:5px 5px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head><body>
+<div class="wrap">
+  <header>
+    <h1>Solar PV Lab</h1>
+    <p class="lede">A 10 kW rooftop bifacial PV plant you can run: watch current flow from the modules to the grid, then add shading, faults and hot spots and see what they do to the curves, the temperatures and the maximum power point tracker.</p>
+    <div class="spec" id="spec">Plant: 18 × 565 W bifacial TOPCon modules (144 half-cells, 3 bypass diodes) in 3 strings of 6 → about 10.2 kWp. Module: Voc 50 V, Isc 14 A, Vmp 42 V, Imp 13.2 A (45–46 V at light load).</div>
+    <div class="credit">
+      <span class="proj">Project: VidyutAI</span>
+      <span>Prepared by <b>Mr. Naveen Bhati</b>, Department of Electrical Engineering, IIT Gandhinagar</span>
+      <span>PI: <b>Prof. Pallavi Bhardwaj</b></span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Lab sections">
+    <button role="tab" id="t-plant" aria-selected="true" data-tab="plant">Plant</button>
+    <button role="tab" id="t-curves" aria-selected="false" data-tab="curves">Curves</button>
+    <button role="tab" id="t-shading" aria-selected="false" data-tab="shading">Shading</button>
+    <button role="tab" id="t-sun" aria-selected="false" data-tab="sun">Sun &amp; shadow</button>
+    <button role="tab" id="t-hotspot" aria-selected="false" data-tab="hotspot">Hot spot</button>
+    <button role="tab" id="t-faults" aria-selected="false" data-tab="faults">Faults</button>
+    <button role="tab" id="t-mppt" aria-selected="false" data-tab="mppt">MPPT</button>
+    <button role="tab" id="t-bench" aria-selected="false" data-tab="bench">Test bench</button>
+    <button role="tab" id="t-life" aria-selected="false" data-tab="life">Life</button>
+    <button role="tab" id="t-code" aria-selected="false" data-tab="code">Code</button>
+    <button role="tab" id="t-standards" aria-selected="false" data-tab="standards">Standards</button>
+  </nav>
+
+  <!-- PLANT -->
+  <section id="tab-plant" role="tabpanel" aria-labelledby="t-plant">
+    <div class="grid">
+      <div class="card controls">
+        <h2>Run the plant</h2>
+        <div id="plantCtl"></div>
+        <div class="btns">
+          <button class="btn" id="pCloud" aria-pressed="false">Cloud</button>
+          <button class="btn" id="pShadow" aria-pressed="false">Chimney shadow</button>
+          <button class="btn" id="pSoil" aria-pressed="false">Dust 15 %</button>
+          <button class="btn" id="pHot" aria-pressed="false">Hot spot</button>
+          <button class="btn" id="pLL" aria-pressed="false">Line-line fault</button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="pIR"> Thermal camera view (IR)</label>
+        <div class="btns">
+          <button class="btn primary" id="pDemo">Play guided demo</button>
+          <button class="btn" id="pReset">Reset</button>
+        </div>
+        <p class="note">The demo runs about 50 seconds and walks through sun, cloud, shadow, hot spot, dust and a line-line fault.</p>
+      </div>
+      <div class="viz">
+        <div class="stats" id="plantStats"></div>
+        <div class="card scene-wrap">
+          <h3>Rooftop array, combiner box, inverter and grid</h3>
+          <div id="plantScene"></div>
+          <div class="caption" id="pCap" aria-live="polite"><b>Live plant.</b> Moving dots show current; faster and thicker means more current.</div>
+          <div class="irscale" id="pIRscale" hidden><span>20 °C</span><i></i><span>120 °C</span></div>
+        </div>
+        <div class="card">
+          <h3>Array curves at this moment</h3>
+          <div class="legend"><span><i class="cur"></i>Current (A)</span><span><i class="pow"></i>Power (W)</span><span><i class="gh"></i>Same conditions, no fault</span></div>
+          <div id="plantChart"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CURVES -->
+  <section id="tab-curves" role="tabpanel" aria-labelledby="t-curves" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>I–V and P–V curves</h2>
+        <div class="chips" id="cvLevel" role="group" aria-label="Level"></div>
+        <div id="cvCtl"></div>
+        <label class="toggle"><input type="checkbox" id="cvStc" checked> Show standard test conditions (1000 W/m², 25 °C, front only)</label>
+      </div>
+      <div class="viz">
+        <div class="stats" id="cvStats"></div>
+        <div class="card">
+          <div class="legend"><span><i class="cur"></i>Current (A)</span><span><i class="pow"></i>Power (W)</span><span><i class="gh"></i>Standard test conditions</span></div>
+          <div id="cvChart"></div>
+        </div>
+        <div class="card diag"><h3>Reading the curves</h3><p id="cvText"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHADING -->
+  <section id="tab-shading" role="tabpanel" aria-labelledby="t-shading" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>Partial shading</h2>
+        <div class="chips" id="shChips" role="group" aria-label="Shading case"></div>
+        <div class="selrow" id="shCustom">
+          <label>String<select id="shS"><option value="0">S1</option><option value="1">S2</option><option value="2">S3</option></select></label>
+          <label>Module<select id="shM"></select></label>
+          <label>Section<select id="shK"><option value="0">Top third</option><option value="1">Middle third</option><option value="2">Bottom third</option></select></label>
+        </div>
+        <div id="shCtl"></div>
+        <h3>Shading time in a day</h3>
+        <div id="shDay"></div>
+      </div>
+      <div class="viz">
+        <div class="stats" id="shStats"></div>
+        <div class="card">
+          <h3>Where the shadow falls</h3>
+          <div id="shScene"></div>
+          <p class="note">Yellow bars on the right edge of a module mean its bypass diode is conducting at the maximum power point.</p>
+        </div>
+        <div class="card">
+          <h3>Array power against voltage</h3>
+          <div class="legend"><span><i class="pow"></i>Shaded (W)</span><span><i class="gh"></i>No shade (W)</span><span>Ring: true maximum · Square: peak a simple tracker finds from Voc</span></div>
+          <div id="shChart"></div>
+        </div>
+        <div class="card">
+          <h3>Power over the day</h3>
+          <div class="legend"><span><i class="gh"></i>No shade</span><span><i class="pow"></i>With shade, global tracking</span><span><i class="bad"></i>With shade, tracker stuck on local peak</span></div>
+          <div id="shDayChart"></div>
+        </div>
+        <div class="card diag"><h3>What the shadow does</h3><p id="shText"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOT SPOT -->
+  <!-- ================= SUN & SHADOW ================= -->
+  <section id="tab-sun" role="tabpanel" aria-labelledby="t-sun" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>Sun, building and tree</h2>
+        <p class="sl-hint">Rooftop at IIT Gandhinagar (23.22° N, 72.65° E). A building stands east of string 1 and a tree west of string 3. Pick a day, then drag the clock or press Play day.</p>
+        <h3>Day</h3>
+        <div class="chips" id="suDays" role="group" aria-label="Day of year"></div>
+        <div id="suDate"></div>
+        <h3>Clock (IST)</h3>
+        <div id="suTime"></div>
+        <div class="btns"><button type="button" class="btn primary" id="suPlay">Play day</button><button type="button" class="btn" id="suNow">Now (today, live)</button></div>
+        <h3>Building east of string 1</h3>
+        <label class="toggle"><input type="checkbox" id="suUseB" checked> Building present</label>
+        <div id="suB"></div>
+        <h3>Tree west of string 3</h3>
+        <label class="toggle"><input type="checkbox" id="suUseT" checked> Tree present</label>
+        <div id="suT"></div>
+        <h3>Modules</h3>
+        <div class="chips" id="suMount" role="group" aria-label="Mounting"></div>
+        <div id="suTilt"></div>
+        <h3>How the inverter handles shade</h3>
+        <div class="chips" id="suMit" role="group" aria-label="Shade handling"></div>
+      </div>
+      <div class="viz">
+        <div class="stats" id="suStats"></div>
+        <div class="card">
+          <h3>Top view: where the shadows fall right now</h3>
+          <div id="suPlan"></div>
+          <p class="note">North is up. Grey: shadow on the roof. Dark on a module: share of direct sun blocked in each of its 3 bypass sections. The arrow points to the sun.</p>
+        </div>
+        <div class="card">
+          <h3>Power over the day</h3>
+          <div class="legend"><span><i class="gh"></i>No building, no tree</span><span><i class="pow"></i>With shade (selected inverter option)</span><span><i class="bad"></i>Basic tracker stuck on a local peak</span></div>
+          <div id="suDayChart"></div>
+        </div>
+        <div class="two">
+          <div class="card">
+            <h3>Sun and light on the modules</h3>
+            <div class="legend"><span><i class="pow"></i>Light on the modules (W/m²)</span><span><i class="cur"></i>Sun elevation (°)</span></div>
+            <div id="suIrrChart"></div>
+          </div>
+          <div class="card">
+            <h3>When each shadow is on the array</h3>
+            <div id="suWin"></div>
+          </div>
+        </div>
+        <div class="two">
+          <div class="card">
+            <h3>Energy on this day</h3>
+            <div class="tbl-wrap"><table id="suEnergy"></table></div>
+          </div>
+          <div class="card">
+            <h3>Across the year (clear days)</h3>
+            <div class="tbl-wrap"><table id="suSeason"><tr><td>Calculating…</td></tr></table></div>
+            <p class="note">Shadows are longest in winter, when the sun stays low and further south.</p>
+          </div>
+        </div>
+        <div class="card diag">
+          <h3>How the shadow and the loss are calculated (live numbers)</h3>
+          <ol class="steps" id="suHow"></ol>
+        </div>
+        <div class="card diag">
+          <h3>How to monitor it and reduce the loss</h3>
+          <div id="suFix"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-hotspot" role="tabpanel" aria-labelledby="t-hotspot" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>One shaded cell</h2>
+        <p class="note">A leaf or bird dropping covers part of one half-cell. The rest of the string keeps pushing current, so that cell is driven into reverse and turns power into heat.</p>
+        <div class="chips" id="hsCell" role="group" aria-label="Cell quality"></div>
+        <div class="chips" id="hsDiode" role="group" aria-label="Bypass diode"></div>
+        <div id="hsCtl"></div>
+        <div class="btns">
+          <button class="btn primary" id="hsPlay">Play 60 minutes</button>
+          <button class="btn" id="hsZero">Start again</button>
+        </div>
+        <p class="note">Time-lapse: one second of animation is two minutes outdoors.</p>
+      </div>
+      <div class="viz">
+        <div class="stats" id="hsStats"></div>
+        <div class="two">
+          <div class="card">
+            <h3>Thermal camera view of the module</h3>
+            <div id="hsModule"></div>
+            <div class="irscale"><span>20 °C</span><i></i><span>120 °C</span></div>
+          </div>
+          <div class="card">
+            <h3>Hot-cell temperature over time</h3>
+            <div class="legend"><span><i class="bad"></i>Shaded cell (°C)</span><span><i class="gh"></i>Thresholds</span></div>
+            <div id="hsTime"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Heat in the shaded cell against how much of it is covered</h3>
+          <div class="legend"><span><i class="bad"></i>This cell</span><span><i class="gh"></i>Other cell qualities</span><span>Ring: worst-case shading (what IEC 61215 MQT 09 looks for)</span></div>
+          <div id="hsSweep"></div>
+        </div>
+        <div class="card diag"><h3>Analysis</h3><div id="hsText"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAULTS -->
+  <section id="tab-faults" role="tabpanel" aria-labelledby="t-faults" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>Inject a fault</h2>
+        <div class="chips" id="fChips" role="group" aria-label="Fault type"></div>
+        <div class="selrow">
+          <label>String<select id="fS"><option value="0">S1</option><option value="1" selected>S2</option><option value="2">S3</option></select></label>
+          <label>Module<select id="fM"></select></label>
+        </div>
+        <div id="fCtl"></div>
+        <label class="toggle"><input type="checkbox" id="fIR"> Thermal camera view (IR)</label>
+      </div>
+      <div class="viz">
+        <div class="card dx" id="fDx"></div>
+        <div class="stats" id="fStats"></div>
+        <div class="card">
+          <h3>Array</h3>
+          <div id="fScene"></div>
+        </div>
+        <div class="two">
+          <div class="card">
+            <h3>Array I–V and P–V</h3>
+            <div class="legend"><span><i class="cur"></i>I (A)</span><span><i class="pow"></i>P (W)</span><span><i class="gh"></i>Healthy</span></div>
+            <div id="fChart"></div>
+          </div>
+          <div class="card">
+            <h3>String currents at the operating point</h3>
+            <div class="bars" id="fBars"></div>
+            <h3 style="margin-top:14px">String checks (IEC 62446-1 style)</h3>
+            <div class="tbl-wrap"><table id="fTable"></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MPPT -->
+  <section id="tab-mppt" role="tabpanel" aria-labelledby="t-mppt" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>Inverter MPPT</h2>
+        <div class="chips" id="algoChips" role="group" aria-label="Algorithm"></div>
+        <div id="mpptCtl"></div>
+        <label class="toggle"><input type="checkbox" id="mShade"> Chimney shadow on string 1 (two power peaks)</label>
+        <div class="btns">
+          <button class="btn primary" id="mRun">Pause</button>
+          <button class="btn" id="mCloud">Cloud passes</button>
+          <button class="btn" id="mScan">Global scan now</button>
+          <button class="btn" id="mReset">Restart</button>
+        </div>
+      </div>
+      <div class="viz">
+        <div class="stats" id="mpptStats"></div>
+        <div class="card">
+          <h3>Array power against voltage</h3>
+          <div class="legend"><span><i class="pow"></i>Array P–V</span><span>Filled dot: tracker now</span><span>Ring: true maximum</span></div>
+          <div id="mpptChart1"></div>
+        </div>
+        <div class="card">
+          <h3>Power over the last 18 seconds</h3>
+          <div class="legend"><span><i class="pow"></i>Tracker output (W)</span><span><i class="gh"></i>Available at maximum (W)</span></div>
+          <div id="mpptChart2"></div>
+        </div>
+        <div class="card diag"><h3>What is happening</h3><p id="mpptText"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEST BENCH -->
+  <section id="tab-bench" role="tabpanel" aria-labelledby="t-bench" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>Single-module test bench</h2>
+        <p class="note">One 565 W module drives the load. A Tektronix probe reads current into logger CH9 and an isolated voltage sensor reads voltage into CH10.</p>
+        <h3>Load</h3>
+        <div class="chips" id="bnLoad" role="group" aria-label="Load type"></div>
+        <div id="bnRwrap"></div>
+        <div id="bnCtl"></div>
+        <div class="btns">
+          <button class="btn primary" id="bnSweep">Sweep the load</button>
+          <button class="btn" id="bnClear">Clear logged points</button>
+        </div>
+        <p class="note">Logger scaling from the lab calibration: I = 126.67 × V(CH9), V = 31 × V(CH10).</p>
+      </div>
+      <div class="viz">
+        <div class="stats" id="bnStats"></div>
+        <div class="card">
+          <h3>Bench wiring with live current</h3>
+          <div id="bnScene"></div>
+        </div>
+        <div class="card">
+          <h3>Module I–V curve, rheostat load line and logged points</h3>
+          <div class="legend"><span><i class="cur"></i>Module I–V</span><span><i class="gh"></i>Load line I = V/R</span><span>Red dots: logged points</span></div>
+          <div id="bnChart"></div>
+        </div>
+        <div class="card diag"><h3>What the bench shows</h3><p id="bnText"></p></div>
+        <div class="card">
+          <h3>Load rating for this module</h3>
+          <div class="tbl-wrap"><table id="bnRate"></table></div>
+          <p class="note" style="margin-top:8px">The 45–46 V you read on the module is its voltage at light load, close to open circuit. At full power it works near 42 V and 13.2 A (about 555–565 W), so the load is sized from Voc, Isc and Pmax with margin.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIFE -->
+  <section id="tab-life" role="tabpanel" aria-labelledby="t-life" hidden>
+    <div class="grid">
+      <div class="card controls" id="lifeCtl">
+        <h2>Ageing and lifetime</h2>
+        <p class="note">Power fades slowly with sunlight and heat, and each module also has a chance of failing outright.</p>
+      </div>
+      <div class="viz">
+        <div class="stats" id="lifeStats"></div>
+        <div class="card">
+          <h3>Power retention</h3>
+          <div class="legend"><span><i class="pow"></i>Power vs new (%)</span><span><i class="gh"></i>80 % end-of-life line</span></div>
+          <div id="lifeChart1"></div>
+        </div>
+        <div class="card">
+          <h3>Chance the module is still working</h3>
+          <div class="legend"><span><i class="cur"></i>Survival (%)</span></div>
+          <div id="lifeChart2"></div>
+        </div>
+        <div class="card diag"><h3>Reading the curves</h3><p id="lifeText"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STANDARDS -->
+  <!-- ================= CODE ================= -->
+  <section id="tab-code" role="tabpanel" aria-labelledby="t-code" hidden>
+    <div class="grid">
+      <div class="card controls">
+        <h2>What runs behind the page</h2>
+        <p class="sl-hint">The whole lab is one HTML file: HTML for the layout, CSS for the look and JavaScript for the physics and drawings. It runs entirely in the viewer's browser: no server, no data is sent anywhere, and it works offline once loaded.</p>
+        <h3>Pick a function</h3>
+        <div class="chips" id="cdPick" role="group" aria-label="Function to show"></div>
+        <h3>Run the model yourself</h3>
+        <div id="cdRunCtl"></div>
+        <button type="button" class="btn primary" id="cdRun">Run one module</button>
+      </div>
+      <div class="viz">
+        <div class="card">
+          <h3>How the pieces connect</h3>
+          <div id="cdFlow"></div>
+        </div>
+        <div class="card">
+          <h3 id="cdTitle">Source code</h3>
+          <p id="cdWhat" class="note" style="font-size:14px;color:var(--ink)"></p>
+          <pre class="code" id="cdSrc"></pre>
+          <p class="note">This text is read live from the code that draws this page (Function.toString), so it is exactly what runs.</p>
+        </div>
+        <div class="card">
+          <h3>Result of your run</h3>
+          <pre class="code" id="cdOut">Press “Run one module”.</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-standards" role="tabpanel" aria-labelledby="t-standards" hidden>
+    <div class="card">
+      <h2>Standards behind this lab</h2>
+      <p class="note">What each standard covers and where this lab uses it. The lab is a teaching model; for design and test work use the full standard texts and the module datasheet.</p>
+      <div class="tbl-wrap" style="margin-top:10px">
+        <table>
+          <thead><tr><th>Standard</th><th>What it covers</th><th>Used in this lab</th></tr></thead>
+          <tbody>
+            <tr><td>IEC 61215-1/-2:2021</td><td>Design qualification of PV modules. MQT 09 hot-spot endurance: cells are shaded one at a time to find the worst case, then the module is exposed to 1000 ± 100 W/m² for 1 h (extended up to 5 h if cell temperature is still rising) at a module temperature of 55 ± 15 °C. Pass: no melted solder, delamination or burn marks; insulation and wet leakage still pass.</td><td>Hot spot tab: worst-case shading curve and the test exposure.</td></tr>
+            <tr><td>IEC 61215-2 MQT 11, 13</td><td>Thermal cycling (−40 to +85 °C) and damp heat (85 °C, 85 % RH).</td><td>85 °C line on the hot-spot chart: the top of the qualification temperature range.</td></tr>
+            <tr><td>IEC 61730-1/-2</td><td>Module safety qualification.</td><td>Safety context for hot spots and failed bypass diodes.</td></tr>
+            <tr><td>IEC TS 62446-3:2017</td><td>Outdoor infrared thermography of PV modules and plants: stable, high irradiance (≥ 600 W/m² is the usual requirement), thermal steady state, soiling below 10 % Impp loss, and classification of findings into classes of abnormality (CoA 1–3).</td><td>Thermal camera views and the hot-spot flag.</td></tr>
+            <tr><td>IEC 62446-1</td><td>Commissioning and periodic tests: polarity, string Voc and Isc, insulation resistance, optional I–V curve tracing.</td><td>Faults tab: string Voc, Isc and current checks used for diagnosis.</td></tr>
+            <tr><td>IEC 60904-1 and IEC TS 60904-1-2</td><td>Measuring I–V characteristics; the bifacial part defines how to measure front and rear response and the bifaciality factor.</td><td>Bifacial model with bifaciality 0.80 and rear irradiance from albedo.</td></tr>
+            <tr><td>IEC 60891</td><td>Translating measured I–V curves to other temperature and irradiance.</td><td>Curves tab: why field curves must be corrected before comparing with the datasheet.</td></tr>
+            <tr><td>IEC 61853-1</td><td>Module performance over a matrix of irradiance and temperature.</td><td>Irradiance and temperature sliders.</td></tr>
+            <tr><td>IEC 62548</td><td>PV array design: cables, string overcurrent protection when reverse current from parallel strings can exceed the module's rating, disconnection.</td><td>Line-line fault, reverse string current and combiner fuses.</td></tr>
+            <tr><td>IEC 62109-1/-2</td><td>Safety of power converters for PV, including array insulation monitoring and residual-current detection.</td><td>Note on ground faults (not simulated).</td></tr>
+            <tr><td>IEC 62979</td><td>Bypass diode thermal runaway test.</td><td>Context for bypass diodes that run hot during long shading.</td></tr>
+            <tr><td>IEC 61724-1</td><td>PV system performance monitoring: what to measure (irradiance, temperatures, DC and AC quantities) and accuracy classes.</td><td>Sensors and logger in the plant drawing.</td></tr>
+            <tr><td>EN 50530</td><td>Overall efficiency of grid-connected inverters, including static and dynamic MPPT efficiency.</td><td>MPPT tab: tracking efficiency.</td></tr>
+            <tr><td>IEEE 1547-2018</td><td>Interconnection of distributed energy resources with the grid (AC side).</td><td>AC side label only.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>Assumptions in the model</h2>
+      <ul class="plain">
+        <li>Module values are the ones used in the lab: Voc 50 V, Isc 14 A, Vmp 42 V, Imp 13.2 A (Vmp × Imp = 554 W against the 565 W nameplate). 144 half-cells, two halves in parallel, three bypass diodes.</li>
+        <li>Coefficients are typical for n-type TOPCon, not from the datasheet: Voc −0.25 %/°C, Isc +0.046 %/°C, NMOT 43 °C, bifaciality 0.80. Replace them with the datasheet values when available.</li>
+        <li>Rear irradiance = albedo × front irradiance × 0.4 (view factor for a raised rooftop table).</li>
+        <li>Curves use a fast explicit approximation of the one-diode model. Its power temperature coefficient comes out near −0.2 %/°C, a little milder than a real TOPCon module (about −0.3 %/°C).</li>
+        <li>Hot spot: the shaded half-cell is a photocurrent source with a shunt resistance; its reverse voltage is limited by the other 23 cells of the substring plus a 0.45 V bypass diode, or by a 20 V breakdown when the diode is open. Thermal resistance 1.2 K/W in still air and a 6-minute time constant. Results are indicative, not a qualification test.</li>
+        <li>Inverter: one MPPT input for all three strings, 97.5 % conversion efficiency.</li>
+        <li>Drawings of the plant, modules and equipment are illustrations made by this page; they are not photographs.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="note" style="margin-top:18px">Model: one-diode style curves for a 144 half-cell bifacial module with three bypass-diode substrings, combined into strings and an array. Built for teaching, not for system sizing.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function el(h){var t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstChild}
+var REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function r0(x){return Math.round(x)}
+function f1(x){return x.toFixed(1)}
+function f2(x){return x.toFixed(2)}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+
+/* ============ PV physics ============ */
+var MOD={voc:50,isc:14,vmp:42,imp:13.2,beta:-0.0025,alpha:0.00046,nmot:43,phi:0.80};
+var IMPR=MOD.imp/MOD.isc, VMPR=MOD.vmp/MOD.voc;
+var C2=(VMPR-1)/Math.log(1-IMPR), C1=(1-IMPR)*Math.exp(-VMPR/C2);
+var VD=0.45, RCAB=0.15, VF=0.4, ETA=0.975;
+function tCell(Ta,G){return Ta+(MOD.nmot-20)/800*G}
+function subMake(Gf,Gr,T,shade,soil,d){
+  var Geff=Math.max(0,Gf*(1-shade)*(1-soil)+MOD.phi*Gr);
+  var isc=MOD.isc*Geff/1000*(1+MOD.alpha*(T-25));
+  var voc=Math.max(0.3,(MOD.voc*(1+MOD.beta*(T-25))+2.0*Math.log(Math.max(Geff,2)/1000))/3);
+  return {isc:Math.max(isc,1e-4),voc:voc,d:d||'ok',geff:Geff};
+}
+function subV(s,I){
+  if(s.d==='short')return 0;
+  var x=1+(1-I/s.isc)/C1, v=x>1e-12?C2*s.voc*Math.log(x):-1e3;
+  if(s.d==='ok')return Math.max(v,-VD);
+  if(v>=0)return v;
+  return -Math.min(25,Math.max(0,(I-s.isc))*2.5);
+}
+function strV(st,I){
+  var v=0,n=st.mods.length-(st.ll||0),m,k,mo;
+  for(m=0;m<n;m++){mo=st.mods[m];for(k=0;k<3;k++)v+=subV(mo.subs[k],I);v-=I*mo.rs}
+  return v-I*(st.rc==null?RCAB:st.rc);
+}
+function strI(st,V){
+  if(st.open)return 0;
+  var hi=st.imax*1.0005,lo=-60,k,mid;
+  if(strV(st,hi)>=V)return hi;
+  if(strV(st,lo)<=V)return lo;
+  for(k=0;k<34;k++){mid=(lo+hi)/2;if(strV(st,mid)>V)lo=mid;else hi=mid}
+  return (lo+hi)/2;
+}
+function finishString(st){
+  var mx=0;st.mods.forEach(function(mo){mo.subs.forEach(function(s){mx=Math.max(mx,s.isc)})});st.imax=mx;
+  st.key=JSON.stringify([st.mods.map(function(mo){return [mo.rs,mo.subs.map(function(s){return [s.isc.toFixed(5),s.voc.toFixed(5),s.d]})]}),!!st.open,st.ll||0,st.rc]);
+  return st;
+}
+function groupA(A){var map={},g=[];A.strings.forEach(function(st){if(map[st.key])map[st.key].n++;else{map[st.key]={st:st,n:1};g.push(map[st.key])}});A.groups=g;return A}
+function arrI(A,V){var I=0;for(var i=0;i<A.groups.length;i++)I+=A.groups[i].n*strI(A.groups[i].st,V);return I}
+function emptyShade(){var a=[];for(var s=0;s<3;s++){a.push([]);for(var m=0;m<6;m++)a[s].push([0,0,0])}return a}
+function scenario(o){var S={G:1000,Ta:30,alb:0.25,soil:0,sh:emptyShade(),diode:{},openStr:-1,ll:{s:-1,k:0},rs:{},hot:null};for(var k in o)S[k]=o[k];return S}
+function build(S){
+  var Gr=S.G*S.alb*VF,T=tCell(S.Ta,S.G),strings=[];
+  for(var s=0;s<3;s++){
+    var mods=[];
+    for(var m=0;m<6;m++){
+      var subs=[];
+      for(var k=0;k<3;k++)subs.push(subMake(S.G,Gr,T,S.sh[s][m][k],S.soil,S.diode[s+'-'+m+'-'+k]));
+      mods.push({subs:subs,rs:(S.rs[s]||0)});
+    }
+    strings.push(finishString({mods:mods,open:S.openStr===s,ll:S.ll.s===s?S.ll.k:0}));
+  }
+  return groupA({strings:strings,T:T,Gr:Gr,G:S.G,Ta:S.Ta,S:S});
+}
+function single(nMods,G,Ta,alb,T){
+  var Gr=G*alb*VF;T=T==null?tCell(Ta,G):T;
+  var mods=[];for(var m=0;m<nMods;m++){var subs=[];for(var k=0;k<3;k++)subs.push(subMake(G,Gr,T,0,0,'ok'));mods.push({subs:subs,rs:0})}
+  return {mods:mods,open:false,ll:0,rc:nMods===1?0:RCAB};
+}
+function makeA(strings,G,Ta,T){return groupA({strings:strings.map(finishString),G:G,Ta:Ta,T:T})}
+function arrCurve(A,n){
+  n=n||160;
+  var vmax=0,k;A.strings.forEach(function(st){if(!st.open)vmax=Math.max(vmax,strV(st,0))});
+  if(vmax<=0||arrI(A,0)<=0)return {voc:0,isc:0,pts:[[0,0]],pw:[[0,0]],best:{p:0,v:0,i:0},peaks:0,peakList:[],ff:0};
+  var lo=0,hi=vmax+1;
+  for(k=0;k<40;k++){var mid=(lo+hi)/2;if(arrI(A,mid)>0)lo=mid;else hi=mid}
+  var voc=lo,pts=[],pw=[],best={p:0,v:0,i:0};
+  for(k=0;k<=n;k++){var v=voc*k/n,i=Math.max(0,arrI(A,v)),p=v*i;pts.push([v,i]);pw.push([v,p]);if(p>best.p)best={p:p,v:v,i:i}}
+  var thr=best.p*0.04,state='up',cand=-1,candV=0,low=0,pk=[];
+  pw.forEach(function(q){var v=q[0],p=q[1];
+    if(state==='up'){if(p>cand){cand=p;candV=v}else if(cand-p>thr){pk.push({v:candV,p:cand});state='down';low=p}}
+    else{if(p<low)low=p;else if(p-low>thr){state='up';cand=p;candV=v}}});
+  if(state==='up'&&cand>0)pk.push({v:candV,p:cand});
+  var isc=pts[0][1];
+  return {voc:voc,isc:isc,pts:pts,pw:pw,best:best,peaks:pk.length,peakList:pk,ff:best.p/(voc*isc||1)};
+}
+function bypassMap(A,V){
+  return A.strings.map(function(st){
+    var I=strI(st,V);
+    return st.mods.map(function(mo,m){return mo.subs.map(function(s){
+      if(m>=st.mods.length-(st.ll||0))return false;
+      return s.d==='ok'&&subV(s,I)<=-VD+1e-6;})});
+  });
+}
+function countBypass(map){var n=0;map.forEach(function(a){a.forEach(function(b){b.forEach(function(x){if(x)n++})})});return n}
+
+/* hot-spot cell model */
+function hotspot(o){
+  var Tm=o.Ta+(MOD.nmot-20)/800*o.G*1.3/(1+0.3*o.wind);
+  var Ih=MOD.imp*o.G/1000/2,Isc=MOD.isc*o.G/1000/2,IL=(1-o.s)*Isc;
+  var vcell=MOD.vmp/72,vcl=o.diode==='ok'?23*vcell+VD:20;
+  var vr=0,ic=Ih;
+  if(Ih>IL){vr=Math.min((Ih-IL)*o.rsh,vcl);ic=Math.min(Ih,IL+vr/o.rsh)}
+  var P=vr*ic,rth=1.2/(1+0.15*o.wind),tau=6/(1+0.1*o.wind),Tss=Tm+P*rth;
+  return {Tm:Tm,Ih:Ih,IL:IL,vr:vr,ic:ic,P:P,Tss:Tss,tau:tau,vcl:vcl,rth:rth,
+    bypass:o.diode==='ok'&&vr>=vcl-1e-9,
+    Tat:function(t){return Tm+(Tss-Tm)*(1-Math.exp(-t/tau))},
+    tTo:function(th){if(Tss<=th)return null;if(Tm>=th)return 0;return -tau*Math.log(1-(th-Tm)/(Tss-Tm))}};
+}
+function irColor(T){
+  var x=clamp((T-20)/100,0,1);
+  var st=[[0,[20,11,52]],[0.25,[91,26,134]],[0.5,[195,59,110]],[0.72,[244,138,44]],[0.9,[251,233,107]],[1,[255,251,224]]];
+  for(var i=1;i<st.length;i++)if(x<=st[i][0]){var a=st[i-1],b=st[i],f=(x-a[0])/(b[0]-a[0]);
+    return 'rgb('+[0,1,2].map(function(j){return r0(a[1][j]+(b[1][j]-a[1][j])*f)}).join(',')+')'}
+  return 'rgb(255,251,224)';
+}
+
+/* ============ chart renderer (from the first PV Lab, extended) ============ */
+function niceStep(x){var p=Math.pow(10,Math.floor(Math.log10(x))),f=x/p;return (f<1.5?1:f<3?2:f<7?5:10)*p}
+function ticks(a,b,n){var s=niceStep((b-a)/n),o=[];for(var v=Math.ceil(a/s-1e-9)*s;v<=b+1e-9;v+=s)o.push(+v.toFixed(6));return o}
+function ft(t){return String(+t.toFixed(2))}
+function chart(host,o){
+  var w=Math.max(260,host.clientWidth||320);
+  var h=o.h||Math.round(Math.min(300,Math.max(210,w*0.56)));
+  var m={l:46,r:o.y2?50:14,t:24,b:36},iw=w-m.l-m.r,ih=h-m.t-m.b;
+  var x0=o.xmin!=null?o.xmin:0,x1=o.xmax,y0=o.ymin!=null?o.ymin:0,y1=o.ymax;
+  if(x1<=x0)x1=x0+1;if(y1<=y0)y1=y0+1;
+  var z0=o.y2&&o.y2.min!=null?o.y2.min:0,z1=o.y2?Math.max(o.y2.max,z0+1):1;
+  function X(v){return m.l+(v-x0)/(x1-x0)*iw}
+  function Y(v){return m.t+ih-(v-y0)/(y1-y0)*ih}
+  function Z(v){return m.t+ih-(v-z0)/(z1-z0)*ih}
+  function path(a,f){return 'M'+a.map(function(p){return X(p[0]).toFixed(1)+','+f(p[1]).toFixed(1)}).join('L')}
+  var s='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="'+(o.aria||'chart')+'">';
+  s+='<defs><clipPath id="'+o.id+'c"><rect x="'+m.l+'" y="'+(m.t-2)+'" width="'+iw+'" height="'+(ih+4)+'"/></clipPath></defs>';
+  ticks(y0,y1,5).forEach(function(t){var y=Y(t);
+    s+='<line class="gl" x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/><text class="tk" x="'+(m.l-6)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+ft(t)+'</text>'});
+  if(o.y2)ticks(z0,z1,5).forEach(function(t){s+='<text class="tk" x="'+(m.l+iw+6)+'" y="'+(Z(t)+4).toFixed(1)+'">'+ft(t)+'</text>'});
+  ticks(x0,x1,o.xt||6).forEach(function(t){s+='<text class="tk" x="'+X(t).toFixed(1)+'" y="'+(m.t+ih+16)+'" text-anchor="middle">'+ft(t)+'</text>'});
+  s+='<line class="ax" x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+(m.t+ih)+'" y2="'+(m.t+ih)+'"/>';
+  if(o.xlabel)s+='<text class="ttl" x="'+(m.l+iw/2)+'" y="'+(h-4)+'" text-anchor="middle">'+o.xlabel+'</text>';
+  if(o.ylabel)s+='<text class="ttl '+(o.ylc||'')+'" x="'+m.l+'" y="13">'+o.ylabel+'</text>';
+  if(o.y2&&o.y2.label)s+='<text class="ttl '+(o.y2.c||'')+'" x="'+(m.l+iw)+'" y="13" text-anchor="end">'+o.y2.label+'</text>';
+  s+='<g clip-path="url(#'+o.id+'c)">';
+  (o.hlines||[]).forEach(function(l){var y=(l.ax==='y2'?Z:Y)(l.y);
+    s+='<line class="ref '+(l.cls||'')+'" x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/>';
+    if(l.label)s+='<text class="tk reflbl '+(l.cls||'')+'" x="'+(l.left?m.l+4:m.l+iw-4)+'" y="'+(y-4).toFixed(1)+'" text-anchor="'+(l.left?'start':'end')+'">'+l.label+'</text>'});
+  (o.vlines||[]).forEach(function(l){var x=X(l.x);
+    s+='<line class="ref '+(l.cls||'')+'" x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="'+m.t+'" y2="'+(m.t+ih)+'"/>';
+    if(l.label)s+='<text class="tk reflbl '+(l.cls||'')+'" x="'+(x+4).toFixed(1)+'" y="'+(m.t+12)+'">'+l.label+'</text>'});
+  (o.series||[]).forEach(function(se){if(se.pts&&se.pts.length>1)s+='<path class="ln '+se.cls+'" d="'+path(se.pts,se.ax==='y2'?Z:Y)+'"/>'});
+  (o.scatter||[]).forEach(function(se){se.pts.forEach(function(p){s+='<circle class="sc '+se.cls+'" cx="'+X(p[0]).toFixed(1)+'" cy="'+(se.ax==='y2'?Z:Y)(p[1]).toFixed(1)+'" r="'+(se.r||3.5)+'"/>'})});
+  (o.dots||[]).forEach(function(d){s+='<circle class="dot" cx="'+X(d.x).toFixed(1)+'" cy="'+(d.ax==='y2'?Z:Y)(d.y).toFixed(1)+'" r="'+d.r+'" opacity="'+d.o+'"/>'});
+  s+='</g>';
+  (o.marks||[]).forEach(function(k){
+    var cx=X(k.x),cy=(k.ax==='y2'?Z:Y)(k.y);
+    if(k.sq)s+='<rect class="mk '+k.cls+'" x="'+(cx-5).toFixed(1)+'" y="'+(cy-5).toFixed(1)+'" width="10" height="10"/>';
+    else s+='<circle class="mk '+k.cls+'" cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+(k.r||5)+'"/>';
+    if(k.label)s+='<text class="mklbl" x="'+(cx>m.l+iw*0.6?cx-9:cx+9).toFixed(1)+'" y="'+(cy-(k.below?-16:8)).toFixed(1)+'" text-anchor="'+(cx>m.l+iw*0.6?'end':'start')+'">'+k.label+'</text>'});
+  s+='</svg>';
+  host.innerHTML=s;
+}
+
+/* ============ controls helpers ============ */
+function mkSlider(host,o){
+  var w=el('<label class="sl"><span class="sl-top"><span>'+o.label+'</span><output></output></span><input type="range" id="'+o.id+'" min="'+o.min+'" max="'+o.max+'" step="'+o.step+'" value="'+o.value+'"></label>');
+  var inp=$('input',w),out=$('output',w);
+  function show(){out.textContent=(o.fmt?o.fmt(+inp.value):(+inp.value).toFixed(o.dec||0)+(o.unit||''))}
+  inp.addEventListener('input',function(){show();if(o.onInput)o.onInput(+inp.value)});
+  show();host.appendChild(w);
+  return {get:function(){return +inp.value},set:function(v){inp.value=v;show()}};
+}
+function mkChips(host,list,cur,onPick){
+  host.innerHTML='';
+  list.forEach(function(it){
+    var b=el('<button type="button" class="chip" aria-pressed="'+(it[0]===cur)+'" data-k="'+it[0]+'">'+it[1]+'</button>');
+    b.addEventListener('click',function(){
+      $$('.chip',host).forEach(function(c){c.setAttribute('aria-pressed',c===b?'true':'false')});
+      onPick(it[0]);
+    });
+    host.appendChild(b);
+  });
+}
+function setChip(host,k){$$('.chip',host).forEach(function(c){c.setAttribute('aria-pressed',c.dataset.k===k?'true':'false')})}
+function stat(label,val,sub,cls){return '<div class="stat '+(cls||'')+'"><span>'+label+'</span><b>'+val+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div>'}
+function pressed(b,on){b.setAttribute('aria-pressed',on?'true':'false')}
+
+/* ============ array drawing (illustration) ============ */
+var AG={x0:40,mw:66,mh:44,gx:6,gy:28};
+function arraySVG(p,bos){
+  var W=bos?1000:500,Y0=bos?118:28,H=bos?520:300,s='',r,m,k;
+  var roofY=Y0+3*(AG.mh+AG.gy)-AG.gy+38;
+  s+='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+(bos?'Rooftop PV plant with combiner box, inverter and grid':'PV array of 3 strings by 6 modules')+'">';
+  s+='<defs><linearGradient id="'+p+'sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky)"/><stop offset="1" stop-color="var(--sky2)"/></linearGradient></defs>';
+  s+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+p+'sky)"/>';
+  if(bos){
+    s+='<g id="'+p+'-sun"><circle cx="0" cy="0" r="22" fill="var(--sunDisc)"/>';
+    for(k=0;k<8;k++){var a=k*Math.PI/4;s+='<line x1="'+(30*Math.cos(a)).toFixed(1)+'" y1="'+(30*Math.sin(a)).toFixed(1)+'" x2="'+(40*Math.cos(a)).toFixed(1)+'" y2="'+(40*Math.sin(a)).toFixed(1)+'" stroke="var(--sunDisc)" stroke-width="3" stroke-linecap="round"/>'}
+    s+='</g>';
+    s+='<g id="'+p+'-cloud" opacity="0"><ellipse cx="0" cy="0" rx="58" ry="20" fill="var(--cloud)"/><ellipse cx="-30" cy="-12" rx="30" ry="18" fill="var(--cloud)"/><ellipse cx="22" cy="-16" rx="34" ry="20" fill="var(--cloud)"/></g>';
+    s+='<g transform="translate(486,78)"><rect x="-10" y="6" width="20" height="8" fill="var(--boxLine)"/><path d="M-9 6 A9 9 0 0 1 9 6 Z" fill="var(--sky2)" stroke="var(--boxLine)"/><text x="16" y="12" class="tk">pyranometer</text></g>';
+  }
+  s+='<rect x="0" y="'+roofY+'" width="'+W+'" height="'+(H-roofY)+'" fill="var(--roof)"/>';
+  for(k=0;k<W;k+=40)s+='<line x1="'+k+'" y1="'+roofY+'" x2="'+(k-30)+'" y2="'+H+'" stroke="var(--roofLine)" stroke-width="1"/>';
+  var xR=AG.x0+6*(AG.mw+AG.gx)-AG.gx;
+  s+='<rect x="'+(AG.x0-10)+'" y="'+(Y0-8)+'" width="6" height="'+(roofY-Y0+10)+'" fill="var(--frame)"/><rect x="'+(xR+4)+'" y="'+(Y0-8)+'" width="6" height="'+(roofY-Y0+10)+'" fill="var(--frame)"/>';
+  for(r=0;r<3;r++){
+    var y=Y0+r*(AG.mh+AG.gy);
+    s+='<rect x="'+(AG.x0-10)+'" y="'+(y+AG.mh+4)+'" width="'+(xR-AG.x0+20)+'" height="4" fill="var(--frame)"/>';
+    s+='<text x="'+(AG.x0-14)+'" y="'+(y+AG.mh/2+4)+'" text-anchor="end" class="tk" style="font-weight:600">S'+(r+1)+'</text>';
+    for(m=0;m<6;m++){
+      var x=AG.x0+m*(AG.mw+AG.gx),id=p+'-m-'+r+'-'+m;
+      s+='<g id="'+id+'"><rect class="mfr" x="'+x+'" y="'+y+'" width="'+AG.mw+'" height="'+AG.mh+'" rx="1.5" fill="var(--cell)" stroke="var(--frame)" stroke-width="2"/>';
+      for(k=1;k<12;k++)s+='<line x1="'+(x+k*AG.mw/12).toFixed(1)+'" y1="'+y+'" x2="'+(x+k*AG.mw/12).toFixed(1)+'" y2="'+(y+AG.mh)+'" stroke="var(--cellLine)" stroke-width="0.6"/>';
+      s+='<line x1="'+x+'" y1="'+(y+AG.mh/2)+'" x2="'+(x+AG.mw)+'" y2="'+(y+AG.mh/2)+'" stroke="var(--cellLine)" stroke-width="0.6"/>';
+      for(k=0;k<3;k++){
+        var by=y+k*AG.mh/3;
+        s+='<rect class="mir" x="'+(x+1)+'" y="'+(by+0.5).toFixed(1)+'" width="'+(AG.mw-2)+'" height="'+(AG.mh/3-1).toFixed(1)+'" fill="#000" opacity="0"/>';
+        s+='<rect class="msh" x="'+x+'" y="'+by.toFixed(1)+'" width="'+AG.mw+'" height="'+(AG.mh/3).toFixed(1)+'" fill="var(--shade)" opacity="0"/>';
+        s+='<rect class="mdi" x="'+(x+AG.mw-4)+'" y="'+(by+2).toFixed(1)+'" width="4" height="'+(AG.mh/3-4).toFixed(1)+'" fill="var(--sunDisc)" opacity="0"/>';
+      }
+      s+='<rect class="mll" x="'+x+'" y="'+y+'" width="'+AG.mw+'" height="'+AG.mh+'" fill="none" stroke="var(--bad)" stroke-width="3" stroke-dasharray="4 3" opacity="0"/>';
+      s+='<circle class="mhs" cx="'+(x+AG.mw*0.3)+'" cy="'+(y+AG.mh/2)+'" r="6" fill="#fbe96b" opacity="0"/></g>';
+    }
+  }
+  if(bos){
+    var cx=560,cy=140;
+    s+='<g transform="translate(46,'+(roofY+8)+')"><text class="tk" x="0" y="14">Raised table: light reflected from the roof reaches the rear side</text>';
+    s+='<line x1="10" y1="80" x2="200" y2="80" stroke="var(--roofLine)" stroke-width="3"/><line x1="40" y1="70" x2="150" y2="30" stroke="var(--cell)" stroke-width="7" stroke-linecap="round"/><line x1="140" y1="34" x2="140" y2="80" stroke="var(--frame)" stroke-width="3"/><line x1="50" y1="67" x2="50" y2="80" stroke="var(--frame)" stroke-width="3"/>';
+    s+='<path d="M175 0 L120 38" stroke="var(--sunDisc)" stroke-width="2" marker-end="url(#'+p+'ar)"/><path d="M95 78 L88 58" stroke="var(--sunDisc)" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#'+p+'ar)"/><path d="M118 78 L112 50" stroke="var(--sunDisc)" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#'+p+'ar)"/>';
+    s+='<text class="tk" x="182" y="10">front</text><text class="tk" x="160" y="74">rear (albedo)</text></g>';
+    s+='<defs><marker id="'+p+'ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sunDisc)"/></marker></defs>';
+    for(r=0;r<3;r++){
+      var ys=Y0+r*(AG.mh+AG.gy)+AG.mh/2,yc=cy+24+r*26,d='M'+xR+' '+ys+' H'+(520+r*8)+' V'+yc+' H'+cx;
+      s+='<path d="'+d+'" class="flow" stroke="var(--cable)" stroke-width="5" fill="none"/>';
+      s+='<path id="'+p+'-f'+r+'" d="'+d+'" class="flow" stroke="var(--s'+(r+1)+')" stroke-width="4" stroke-dasharray="1 13"/>';
+      s+='<circle cx="'+(xR+24)+'" cy="'+ys+'" r="7" fill="none" stroke="var(--ink)" stroke-width="2"/>';
+      s+='<text id="'+p+'-l'+r+'" x="'+(xR+38)+'" y="'+(ys-8)+'" class="tk" style="font-weight:600"></text>';
+    }
+    s+='<text x="'+(xR+16)+'" y="'+(Y0-14)+'" class="tk">current sensors</text>';
+    s+='<rect x="'+cx+'" y="'+cy+'" width="96" height="120" rx="6" fill="var(--boxFill)" stroke="var(--boxLine)" stroke-width="2"/>';
+    s+='<text x="'+(cx+48)+'" y="'+(cy-8)+'" text-anchor="middle" class="tk" style="font-weight:600">Combiner box</text>';
+    for(r=0;r<3;r++){var fy=cy+20+r*26;s+='<rect x="'+(cx+10)+'" y="'+(fy-2)+'" width="22" height="8" rx="2" fill="none" stroke="var(--boxLine)"/><line x1="'+(cx+10)+'" y1="'+(fy+2)+'" x2="'+(cx+32)+'" y2="'+(fy+2)+'" stroke="var(--boxLine)"/><text x="'+(cx+36)+'" y="'+(fy+5)+'" class="tk">fuse</text>'}
+    s+='<text x="'+(cx+10)+'" y="'+(cy+100)+'" class="tk">SPD · DC isolator</text>';
+    var dcd='M'+(cx+96)+' '+(cy+50)+' H 740';
+    s+='<path d="'+dcd+'" class="flow" stroke="var(--cable)" stroke-width="7"/><path id="'+p+'-fdc" d="'+dcd+'" class="flow" stroke="var(--cur)" stroke-width="5" stroke-dasharray="1 13"/>';
+    s+='<text id="'+p+'-ldc" x="'+(cx+102)+'" y="'+(cy+38)+'" class="tk" style="font-weight:600"></text>';
+    s+='<rect x="740" y="'+(cy-6)+'" width="104" height="128" rx="8" fill="var(--boxFill)" stroke="var(--boxLine)" stroke-width="2"/>';
+    s+='<text x="792" y="'+(cy-14)+'" text-anchor="middle" class="tk" style="font-weight:600">Inverter 10 kW</text>';
+    s+='<rect x="752" y="'+(cy+6)+'" width="80" height="40" rx="3" fill="var(--cell)"/><text id="'+p+'-linv" x="792" y="'+(cy+24)+'" text-anchor="middle" style="fill:#9EE6B8;font-size:10px"></text><text id="'+p+'-linv2" x="792" y="'+(cy+38)+'" text-anchor="middle" style="fill:#9EE6B8;font-size:10px"></text>';
+    s+='<text x="792" y="'+(cy+70)+'" text-anchor="middle" class="tk">MPPT · DC → AC</text>';
+    var acd='M844 '+(cy+50)+' H 912';
+    s+='<path d="'+acd+'" class="flow" stroke="var(--cable)" stroke-width="7"/><path id="'+p+'-fac" d="'+acd+'" class="flow" stroke="var(--sun)" stroke-width="5" stroke-dasharray="1 13"/>';
+    s+='<text id="'+p+'-lac" x="850" y="'+(cy+38)+'" class="tk" style="font-weight:600"></text>';
+    s+='<g transform="translate(940,'+(cy+60)+')" stroke="var(--boxLine)" stroke-width="2" fill="none"><path d="M-24 60 L-6 -50 L6 -50 L24 60"/><path d="M-30 -30 H30 M-22 0 H22"/><path d="M-14 -50 L0 -66 L14 -50"/></g>';
+    s+='<text x="940" y="'+(cy+138)+'" text-anchor="middle" class="tk">grid / building</text>';
+    s+='<rect x="740" y="'+(cy+160)+'" width="104" height="44" rx="6" fill="var(--boxFill)" stroke="var(--boxLine)" stroke-dasharray="4 3"/><text x="792" y="'+(cy+178)+'" text-anchor="middle" class="tk">data logger</text><text x="792" y="'+(cy+193)+'" text-anchor="middle" class="tk">G, T, V, I</text>';
+    s+='<path d="M'+(xR+24)+' '+(Y0+3*(AG.mh+AG.gy))+' V '+(cy+182)+' H 740" fill="none" stroke="var(--muted)" stroke-dasharray="3 4"/>';
+  }
+  s+='</svg>';
+  return s;
+}
+function paintArray(p,S,A,V,opt){
+  opt=opt||{};
+  var map=bypassMap(A,V),Gfull=A.G+MOD.phi*A.Gr;
+  for(var r=0;r<3;r++){
+    var st=A.strings[r];
+    for(var m=0;m<6;m++){
+      var g=document.getElementById(p+'-m-'+r+'-'+m);if(!g)continue;
+      var sh=$$('.msh',g),ir=$$('.mir',g),di=$$('.mdi',g),ll=$('.mll',g),hs=$('.mhs',g);
+      var bridged=m>=6-(st.ll||0);
+      for(var k=0;k<3;k++){
+        var f=S.sh[r][m][k];
+        sh[k].setAttribute('opacity',(Math.min(0.85,f*0.9)+(st.open?0.35:0)).toFixed(2));
+        var sub=st.mods[m].subs[k];
+        var Tsec=A.Ta+(A.T-A.Ta)*clamp(sub.geff/(Gfull||1),0,1.2);
+        if(st.open||bridged)Tsec=A.T+3;
+        ir[k].setAttribute('fill',irColor(Tsec));ir[k].setAttribute('opacity',opt.ir?'0.95':'0');
+        var on=map[r][m][k]&&!st.open;
+        di[k].setAttribute('opacity',on?'1':(sub.d==='short'?'0.5':'0'));
+        di[k].setAttribute('fill',sub.d==='short'?'var(--bad)':'var(--sunDisc)');
+      }
+      ll.setAttribute('opacity',bridged?'1':'0');
+      var hot=opt.hot&&opt.hot.s===r&&opt.hot.m===m;
+      if(hot){hs.setAttribute('opacity','1');hs.setAttribute('fill',opt.ir?irColor(opt.hot.T):'#F48A2C');hs.setAttribute('r',(4+clamp((opt.hot.T-50)/20,0,6)).toFixed(1));hs.setAttribute('cy',(+$('.mfr',g).getAttribute('y')+AG.mh*(opt.hot.k+0.5)/3).toFixed(1))}
+      else hs.setAttribute('opacity','0');
+    }
+  }
+  return map;
+}
+
+/* flows */
+function flowSet(list){return list.map(function(id){return {el:document.getElementById(id),off:0,v:0}}).filter(function(f){return f.el})}
+function flowStep(F,dt){F.forEach(function(f){f.off=(f.off-f.v*dt)%1400;f.el.style.strokeDashoffset=f.off.toFixed(1)})}
+function flowSpeed(f,amps,scale,widthBase){
+  if(!f)return;var a=Math.abs(amps);
+  f.v=REDUCE?0:(a<0.02?0:Math.sign(amps)*(18+scale*a));
+  f.el.setAttribute('opacity',a<0.02?'0.15':'1');
+  f.el.setAttribute('stroke-width',(widthBase+Math.min(3,a/6)).toFixed(1));
+}
+
+/* ================= PLANT ================= */
+var PL={G:1000,Ta:32,alb:0.25,cloud:false,shadow:false,soil:false,hot:false,ll:false,ir:false};
+var plSl={},PLF=[],plLast=null;
+function plantScenario(){
+  var S=scenario({G:PL.cloud?PL.G*0.3:PL.G,Ta:PL.Ta,alb:PL.alb,soil:PL.soil?0.15:0});
+  if(PL.shadow){[0,1].forEach(function(m){S.sh[0][m]=[0.8,0.8,0.8]})}
+  if(PL.hot){S.sh[1][3][1]=0.3}
+  if(PL.ll){S.ll={s:2,k:2}}
+  return S;
+}
+function hotAt(G,Ta){var h=hotspot({G:G,Ta:Ta,wind:1,s:0.3,rsh:4,diode:'ok'});return h}
+(function(){
+  $('#plantScene').innerHTML=arraySVG('pl',true);
+  var c=$('#plantCtl');
+  plSl.G=mkSlider(c,{id:'pG',label:'Irradiance on the front',min:100,max:1100,step:10,value:PL.G,unit:' W/m²',onInput:function(v){PL.G=v;renderPlant()}});
+  plSl.Ta=mkSlider(c,{id:'pTa',label:'Air temperature',min:10,max:48,step:1,value:PL.Ta,unit:' °C',onInput:function(v){PL.Ta=v;renderPlant()}});
+  plSl.alb=mkSlider(c,{id:'pAlb',label:'Roof albedo (reflectance)',min:0.05,max:0.8,step:0.01,value:PL.alb,dec:2,onInput:function(v){PL.alb=v;renderPlant()}});
+  PLF=flowSet(['pl-f0','pl-f1','pl-f2','pl-fdc','pl-fac']);
+  [['pCloud','cloud'],['pShadow','shadow'],['pSoil','soil'],['pHot','hot'],['pLL','ll']].forEach(function(b){
+    $('#'+b[0]).addEventListener('click',function(){stopDemo();PL[b[1]]=!PL[b[1]];renderPlant()})});
+  $('#pIR').addEventListener('change',function(e){PL.ir=e.target.checked;renderPlant()});
+  $('#pReset').addEventListener('click',function(){stopDemo();resetPlant();setCap('<b>Live plant.</b> Moving dots show current; faster and thicker means more current.')});
+  $('#pDemo').addEventListener('click',function(){if(demoT)stopDemo();else startDemo()});
+})();
+function resetPlant(){PL.G=1000;PL.Ta=32;PL.alb=0.25;PL.cloud=PL.shadow=PL.soil=PL.hot=PL.ll=PL.ir=false;plSl.G.set(1000);plSl.Ta.set(32);plSl.alb.set(0.25);$('#pIR').checked=false;renderPlant()}
+function renderPlant(){
+  var S=plantScenario(),A=build(S),c=arrCurve(A,140);
+  var Sh=scenario({G:S.G,Ta:S.Ta,alb:S.alb}),Ah=build(Sh),ch=arrCurve(Ah,140);
+  var V=c.best.v,Is=A.strings.map(function(st){return strI(st,V)}),Idc=Is.reduce(function(a,b){return a+b},0);
+  var Pdc=c.best.p,Pac=Pdc*(Pdc>500?ETA:0.9);
+  var hs=PL.hot?hotAt(S.G,S.Ta):null;
+  var map=paintArray('pl',S,A,V,{ir:PL.ir,hot:hs?{s:1,m:3,k:1,T:hs.Tss}:null});
+  var nb=countBypass(map);
+  for(var r=0;r<3;r++){
+    flowSpeed(PLF[r],Is[r],7,3);
+    var t=$('#pl-l'+r);t.textContent='S'+(r+1)+' '+f1(Is[r])+' A';t.style.fill=Is[r]<-0.05?'var(--bad)':'var(--ink)';
+  }
+  flowSpeed(PLF[3],Idc,2.6,4);flowSpeed(PLF[4],Pac/230,1.6,4);
+  $('#pl-ldc').textContent=r0(V)+' V · '+f1(Idc)+' A';
+  $('#pl-linv').textContent='MPPT '+r0(V)+' V';$('#pl-linv2').textContent='DC '+f1(Pdc/1000)+' kW';
+  $('#pl-lac').textContent=f1(Pac/1000)+' kW AC';
+  var sun=$('#pl-sun'),Ge=S.G;sun.setAttribute('transform','translate('+(90+Ge/1100*300).toFixed(0)+','+(70-Ge/1100*28).toFixed(0)+')');
+  var cl=$('#pl-cloud');cl.setAttribute('transform','translate('+(110+PL.G/1100*300).toFixed(0)+',62)');cl.setAttribute('opacity',PL.cloud?'0.95':'0');
+  var front=build(scenario({G:S.G,Ta:S.Ta,alb:0})),cf=arrCurve(front,90),bif=cf.best.p>0?100*(ch.best.p/cf.best.p-1):0;
+  var loss=ch.best.p>0?100*(1-Pdc/ch.best.p):0;
+  $('#plantStats').innerHTML=
+    stat('DC power',f2(Pdc/1000)+' kW',r0(V)+' V × '+f1(Idc)+' A')+
+    stat('AC power',f2(Pac/1000)+' kW','inverter 97.5 %')+
+    stat('Cell temperature',r0(A.T)+' °C','air '+S.Ta+' °C')+
+    stat('Rear light',r0(A.Gr)+' W/m²','bifacial gain '+f1(bif)+' %')+
+    stat('Loss vs no fault',f1(Math.max(0,loss))+' %',nb?nb+' bypass diodes on':'',loss>3?'bad':'')+
+    stat('Power peaks',c.peaks,c.peaks>1?'tracker can be fooled':'single peak',c.peaks>1?'bad':'');
+  $('#pIRscale').hidden=!PL.ir;
+  ['pCloud','pShadow','pSoil','pHot','pLL'].forEach(function(id,i){pressed($('#'+id),PL[['cloud','shadow','soil','hot','ll'][i]])});
+  var vx=Math.ceil(Math.max(ch.voc,c.voc)/50)*50,imax=Math.ceil(Math.max(ch.isc,c.isc,1)*1.15/5)*5,pmax=Math.ceil(Math.max(ch.best.p,1000)*1.12/1000)*1000;
+  chart($('#plantChart'),{id:'plc',xmax:vx,xt:6,ymax:imax,y2:{max:pmax,label:'Power (W)',c:'p'},xlabel:'Array voltage (V)',ylabel:'Current (A)',ylc:'c',aria:'Array current and power against voltage',
+    series:[{pts:ch.pts,cls:'gh'},{pts:ch.pw,cls:'gh',ax:'y2'},{pts:c.pts,cls:'cur'},{pts:c.pw,cls:'pow',ax:'y2'}],
+    marks:[{x:V,y:Pdc,ax:'y2',cls:'pow',label:r0(Pdc)+' W'}]});
+  plLast={Pdc:Pdc,V:V,Is:Is,hs:hs,bif:bif,nb:nb,peaks:c.peaks,loss:loss};
+}
+var demoT=null,demoI=0;
+var DEMO=[
+  {d:6500,set:{G:350,Ta:24,cloud:false,shadow:false,soil:false,hot:false,ll:false,ir:false},cap:function(L){return '<b>Morning, 350 W/m².</b> Current starts to flow from the three strings through the combiner box to the inverter: '+f1(L.Pdc/1000)+' kW DC.'}},
+  {d:6500,set:{G:1000,Ta:33},cap:function(L){return '<b>Noon, 1000 W/m².</b> Each string carries about '+f1(L.Is[0])+' A at '+r0(L.V)+' V. Light reflected from the roof adds '+f1(L.bif)+' % through the rear side.'}},
+  {d:6000,set:{cloud:true},cap:function(L){return '<b>A cloud passes.</b> Irradiance drops to 30 %: string currents fall almost in proportion ('+f1(L.Is[0])+' A) while the voltage stays near '+r0(L.V)+' V.'}},
+  {d:7000,set:{cloud:false,shadow:true},cap:function(L){return '<b>Chimney shadow on 2 modules of string 1.</b> '+L.nb+' bypass diodes switch on (yellow bars), string 1 carries '+f1(L.Is[0])+' A and the P–V curve now has '+L.peaks+' peaks. Power loss '+f1(L.loss)+' %.'}},
+  {d:8000,set:{shadow:false,hot:true,ir:true},cap:function(L){return '<b>Hot spot (IR view).</b> A weak cell under a leaf in string 2 heats to about '+r0(L.hs.Tss)+' °C while its neighbours sit near '+r0(L.hs.Tm)+' °C. The I–V curve hardly changes, so only thermography (IEC TS 62446-3) finds it.'}},
+  {d:6500,set:{hot:false,ir:false,soil:true},cap:function(L){return '<b>Dust on all modules (15 %).</b> Every string loses about the same current, the voltage stays near normal; power falls '+f1(L.loss)+' %.'}},
+  {d:8000,set:{soil:false,ll:true},cap:function(L){return '<b>Line-line fault in string 3.</b> Two modules are bridged, so string 3 voltage is too low and the other strings push current back into it ('+f1(L.Is[2])+' A, shown in red). String fuses sized to IEC 62548 must clear this.'}},
+  {d:5000,set:{ll:false},cap:function(){return '<b>Back to healthy operation.</b> Try the buttons, or open the Shading, Hot spot and Faults tabs for the details.'}}
+];
+function setCap(h){$('#pCap').innerHTML=h}
+function startDemo(){demoI=0;$('#pDemo').textContent='Stop demo';stepDemo()}
+function stepDemo(){
+  if(demoI>=DEMO.length){stopDemo();return}
+  var d=DEMO[demoI];for(var k in d.set)PL[k]=d.set[k];
+  plSl.G.set(PL.G);plSl.Ta.set(PL.Ta);$('#pIR').checked=PL.ir;
+  renderPlant();setCap(d.cap(plLast));demoI++;demoT=setTimeout(stepDemo,d.d);
+}
+function stopDemo(){if(demoT)clearTimeout(demoT);demoT=null;$('#pDemo').textContent='Play guided demo'}
+
+/* ================= CURVES ================= */
+var CV={lvl:'module',G:1000,Ta:25,alb:0.25,useCell:true};
+(function(){
+  mkChips($('#cvLevel'),[['module','One module'],['string','One string (6)'],['array','Array (18)']],CV.lvl,function(k){CV.lvl=k;renderCurves()});
+  var c=$('#cvCtl');
+  mkSlider(c,{id:'cvG',label:'Irradiance on the front',min:100,max:1100,step:10,value:CV.G,unit:' W/m²',onInput:function(v){CV.G=v;renderCurves()}});
+  mkSlider(c,{id:'cvT',label:'Air temperature',min:0,max:48,step:1,value:CV.Ta,unit:' °C',onInput:function(v){CV.Ta=v;renderCurves()}});
+  mkSlider(c,{id:'cvA',label:'Albedo (rear light)',min:0,max:0.8,step:0.01,value:CV.alb,dec:2,onInput:function(v){CV.alb=v;renderCurves()}});
+  $('#cvStc').addEventListener('change',renderCurves);
+})();
+function levelA(n,G,Ta,alb,T){
+  var nm=n==='module'?1:6,ns=n==='array'?3:1,list=[];
+  for(var i=0;i<ns;i++)list.push(single(nm,G,Ta,alb,T));
+  return makeA(list,G,Ta,T==null?tCell(Ta,G):T);
+}
+function renderCurves(){
+  var A=levelA(CV.lvl,CV.G,CV.Ta,CV.alb),c=arrCurve(A,180);
+  var stc=arrCurve(levelA(CV.lvl,1000,25,0,25),180);
+  var fr=arrCurve(levelA(CV.lvl,CV.G,CV.Ta,0),120),bif=fr.best.p>0?100*(c.best.p/fr.best.p-1):0;
+  var T=tCell(CV.Ta,CV.G);
+  var ser=[];if($('#cvStc').checked){ser.push({pts:stc.pts,cls:'gh'});ser.push({pts:stc.pw,cls:'gh',ax:'y2'})}
+  ser.push({pts:c.pts,cls:'cur'});ser.push({pts:c.pw,cls:'pow',ax:'y2'});
+  var vx=Math.max(c.voc,stc.voc)*1.05,ix=Math.max(c.isc,stc.isc)*1.15,px=Math.max(c.best.p,stc.best.p)*1.15;
+  chart($('#cvChart'),{id:'cvc',xmax:vx,xt:6,ymax:ix,y2:{max:px,label:'Power (W)',c:'p'},xlabel:'Voltage (V)',ylabel:'Current (A)',ylc:'c',aria:'Current and power against voltage',
+    series:ser,marks:[{x:c.best.v,y:c.best.p,ax:'y2',cls:'pow',label:r0(c.best.p)+' W'}]});
+  $('#cvStats').innerHTML=
+    stat('Max power',r0(c.best.p)+' W','STC '+r0(stc.best.p)+' W')+
+    stat('Vmp × Imp',f1(c.best.v)+' V',f1(c.best.i)+' A')+
+    stat('Open-circuit V',f1(c.voc)+' V','STC '+f1(stc.voc)+' V')+
+    stat('Short-circuit I',f1(c.isc)+' A','STC '+f1(stc.isc)+' A')+
+    stat('Fill factor',f1(c.ff*100)+' %')+
+    stat('Cell temperature',r0(T)+' °C','bifacial gain '+f1(bif)+' %');
+  $('#cvText').textContent='Short-circuit current follows irradiance: at '+CV.G+' W/m² it is '+f1(c.isc)+' A. Open-circuit voltage falls as the cells warm ('+r0(T)+' °C here, about −0.25 % per °C) and only slowly with irradiance. The rear side adds light reflected from the roof: with albedo '+CV.alb.toFixed(2)+' the rear receives '+r0(CV.G*CV.alb*VF)+' W/m², worth about '+f1(bif)+' % more power. Before comparing a field curve with the datasheet, correct it to 1000 W/m² and 25 °C (IEC 60891).';
+}
+
+/* ================= SHADING ================= */
+var SH={cs:'chimney',G:900,Ta:32,alb:0.25,frac:0.8,s:0,m:2,k:0,t1:9,t2:12};
+var SHC={chimney:'Chimney shadow',bird:'Bird dropping on one cell',row:'Row-to-row shadow',tree:'Tree shadow',custom:'Custom'};
+(function(){
+  mkChips($('#shChips'),Object.keys(SHC).map(function(k){return [k,SHC[k]]}),SH.cs,function(k){SH.cs=k;renderShading()});
+  var ms=$('#shM');for(var m=0;m<6;m++)ms.appendChild(el('<option value="'+m+'">M'+(m+1)+'</option>'));ms.value='2';
+  ['shS','shM','shK'].forEach(function(id){$('#'+id).addEventListener('change',function(){SH[id.slice(2).toLowerCase()]=+this.value;renderShading()})});
+  var c=$('#shCtl');
+  SH.fracSl=mkSlider(c,{id:'shF',label:'How dark the shadow is',min:0,max:100,step:1,value:80,unit:' %',onInput:function(v){SH.frac=v/100;renderShading()}});
+  mkSlider(c,{id:'shG',label:'Irradiance on the front',min:200,max:1100,step:10,value:SH.G,unit:' W/m²',onInput:function(v){SH.G=v;renderShading()}});
+  var d=$('#shDay');
+  mkSlider(d,{id:'shT1',label:'Shadow starts',min:6,max:18,step:0.5,value:SH.t1,fmt:hhmm,onInput:function(v){SH.t1=v;if(SH.t2<v)SH.t2=v;renderShading()}});
+  mkSlider(d,{id:'shT2',label:'Shadow ends',min:6,max:18,step:0.5,value:SH.t2,fmt:hhmm,onInput:function(v){SH.t2=Math.max(v,SH.t1);renderShading()}});
+  d.appendChild(el('<p class="sl-hint">Clear day, peak irradiance as set above at 12:00. Energy from 6:00 to 18:00.</p>'));
+  $('#shScene').innerHTML=arraySVG('sh',false);
+})();
+function hhmm(v){var h=Math.floor(v),m=r0((v-h)*60);return (h<10?'0':'')+h+':'+(m<10?'0':'')+m}
+function shadePattern(S,f){
+  var sh=S.sh,m,k;
+  if(SH.cs==='chimney'){[0,1].forEach(function(m){sh[0][m]=[f,f,f]})}
+  else if(SH.cs==='bird'){sh[1][3][1]=f}
+  else if(SH.cs==='row'){for(m=0;m<6;m++)sh[2][m][2]=f}
+  else if(SH.cs==='tree'){for(m=3;m<6;m++){sh[0][m]=[f,f,f*0.6];sh[1][m]=[f*0.6,f*0.5,0]}}
+  else sh[SH.s][SH.m][SH.k]=f;
+  return S;
+}
+function localPeak(c){var pk=c.peakList;return pk.length?pk[pk.length-1]:c.best}
+function renderShading(){
+  $('#shCustom').hidden=SH.cs!=='custom';
+  var S=shadePattern(scenario({G:SH.G,Ta:SH.Ta,alb:SH.alb}),SH.frac),A=build(S),c=arrCurve(A,180);
+  var Ah=build(scenario({G:SH.G,Ta:SH.Ta,alb:SH.alb})),ch=arrCurve(Ah,180);
+  var V=c.best.v,map=paintArray('sh',S,A,V,{}),nb=countBypass(map),lp=localPeak(c);
+  var loss=100*(1-c.best.p/ch.best.p),trap=100*(1-lp.p/ch.best.p);
+  var Is=A.strings.map(function(st){return strI(st,V)});
+  chart($('#shChart'),{id:'shc',xmax:Math.ceil(ch.voc/50)*50,xt:6,ymax:Math.ceil(ch.best.p*1.15/500)*500,xlabel:'Array voltage (V)',ylabel:'Power (W)',ylc:'p',aria:'Array power against voltage with and without shade',
+    series:[{pts:ch.pw,cls:'gh'},{pts:c.pw,cls:'pow'}],
+    marks:[{x:c.best.v,y:c.best.p,cls:'ring',r:9},{x:c.best.v,y:c.best.p,cls:'pow',label:r0(c.best.p)+' W'}].concat(c.peaks>1?[{x:lp.v,y:lp.p,cls:'bad',sq:true,label:r0(lp.p)+' W',below:true}]:[])});
+  /* day */
+  var day=[],dayH=[],dayL=[],E=0,EH=0,EL=0,prev=null;
+  for(var t=6;t<=18.001;t+=0.5){
+    var G=SH.G*Math.max(0,Math.sin(Math.PI*(t-6)/12));
+    var on=t>=SH.t1&&t<=SH.t2&&SH.t2>SH.t1,ph=0,ps=0,pl=0;
+    if(G>5){
+      var Sd=scenario({G:G,Ta:SH.Ta,alb:SH.alb}),cd=arrCurve(build(Sd),70);ph=cd.best.p;
+      if(on){var cs=arrCurve(build(shadePattern(scenario({G:G,Ta:SH.Ta,alb:SH.alb}),SH.frac)),70);ps=cs.best.p;pl=localPeak(cs).p}else{ps=ph;pl=ph}
+    }
+    day.push([t,ps]);dayH.push([t,ph]);dayL.push([t,pl]);
+    if(prev){E+=0.25*(ps+prev[0]);EH+=0.25*(ph+prev[1]);EL+=0.25*(pl+prev[2])}
+    prev=[ps,ph,pl];
+  }
+  chart($('#shDayChart'),{id:'shd',xmin:6,xmax:18,xt:6,ymax:Math.ceil(Math.max.apply(null,dayH.map(function(p){return p[1]}))*1.15/500)*500,xlabel:'Hour of day',ylabel:'Power (W)',ylc:'p',aria:'Power over the day with and without shade',
+    series:[{pts:dayH,cls:'gh'},{pts:dayL,cls:'bad thin'},{pts:day,cls:'pow'}],
+    vlines:SH.t2>SH.t1?[{x:SH.t1,label:'shade on'},{x:SH.t2,label:'off'}]:[]});
+  var dE=EH-E,dEL=EH-EL,hrs=Math.max(0,SH.t2-SH.t1);
+  $('#shStats').innerHTML=
+    stat('Power now',r0(c.best.p)+' W','no shade '+r0(ch.best.p)+' W')+
+    stat('Power loss',f1(loss)+' %','',loss>5?'bad':'')+
+    stat('Bypass diodes on',nb,'of 54')+
+    stat('Power peaks',c.peaks,c.peaks>1?'simple tracker: '+r0(lp.p)+' W':'single peak',c.peaks>1?'bad':'')+
+    stat('Day energy lost',f2(dE/1000)+' kWh',f1(100*dE/EH)+' % of '+f1(EH/1000)+' kWh',dE>0.05*EH?'bad':'')+
+    stat('If tracker stuck',f2(dEL/1000)+' kWh',hrs?f1(hrs)+' h of shade':'no shade window',dEL>dE*1.2?'bad':'');
+  var cases={chimney:'The chimney shadow darkens two whole modules of string 1.',bird:'A bird dropping covers one cell, yet the whole third of that module is limited, because the cells of a substring are in series.',row:'The front row casts a shadow on the bottom third of every module in string 3.',tree:'A tree shadow covers the right side of strings 1 and 2.',custom:'Your custom shadow.'};
+  $('#shText').textContent=cases[SH.cs]+' At the maximum power point '+nb+' bypass diodes conduct, so those substrings are skipped instead of forcing current through dark cells. String currents: '+Is.map(function(i,j){return 'S'+(j+1)+' '+f1(i)+' A'}).join(', ')+'. '+(c.peaks>1?'The P–V curve has '+c.peaks+' peaks: a tracker that only climbs from the open-circuit side stops at '+r0(lp.p)+' W instead of '+r0(c.best.p)+' W, which is why inverters run a periodic global scan. ':'There is only one power peak, so a simple tracker finds the maximum. ')+(hrs?'Over a day the '+f1(hrs)+' h shadow costs '+f2(dE/1000)+' kWh with global tracking and '+f2(dEL/1000)+' kWh if the tracker stays on the local peak.':'');
+}
+
+/* ================= HOT SPOT ================= */
+var HS={G:1000,Ta:30,wind:1,s:0.3,rsh:4,diode:'ok',t:0,play:false};
+var RSH={good:[30,'Good cell (shunt 30 Ω)'],typ:[12,'Typical (12 Ω)'],weak:[4,'Cracked or low-shunt (4 Ω)']};
+var hsT=null;
+(function(){
+  mkChips($('#hsCell'),Object.keys(RSH).map(function(k){return [k,RSH[k][1]]}),'weak',function(k){HS.rsh=RSH[k][0];renderHot()});
+  mkChips($('#hsDiode'),[['ok','Bypass diode working'],['open','Bypass diode failed open']],'ok',function(k){HS.diode=k;renderHot()});
+  var c=$('#hsCtl');
+  mkSlider(c,{id:'hsS',label:'Part of the cell covered',min:0,max:100,step:1,value:30,unit:' %',onInput:function(v){HS.s=v/100;renderHot()}});
+  mkSlider(c,{id:'hsG',label:'Irradiance',min:200,max:1100,step:10,value:HS.G,unit:' W/m²',onInput:function(v){HS.G=v;renderHot()}});
+  mkSlider(c,{id:'hsTa',label:'Air temperature',min:10,max:48,step:1,value:HS.Ta,unit:' °C',onInput:function(v){HS.Ta=v;renderHot()}});
+  mkSlider(c,{id:'hsW',label:'Wind speed',min:0,max:8,step:0.5,value:HS.wind,unit:' m/s',dec:1,onInput:function(v){HS.wind=v;renderHot()}});
+  HS.tSl=mkSlider(c,{id:'hsMin',label:'Minutes since the shading started',min:0,max:60,step:1,value:0,unit:' min',onInput:function(v){HS.t=v;renderHot()}});
+  $('#hsPlay').addEventListener('click',function(){HS.play=!HS.play;if(HS.play&&HS.t>=60)HS.t=0;this.textContent=HS.play?'Pause':'Play 60 minutes'});
+  $('#hsZero').addEventListener('click',function(){HS.t=0;HS.tSl.set(0);renderHot()});
+  var s='<svg viewBox="0 0 220 300" role="img" aria-label="Thermal view of a 144 half-cell module with one shaded cell">';
+  s+='<rect x="2" y="2" width="216" height="296" rx="4" fill="var(--frame)"/>';
+  for(var r=0;r<24;r++)for(var col=0;col<6;col++){var y=8+r*11.8+(r>=12?4:0);s+='<rect id="hc-'+r+'-'+col+'" x="'+(8+col*34.3).toFixed(1)+'" y="'+y.toFixed(1)+'" width="32.5" height="10.6" fill="#333"/>'}
+  s+='<ellipse id="hcLeaf" cx="0" cy="0" rx="10" ry="6" fill="#3E6B2E" opacity="0.85"/>';
+  s+='<text x="110" y="296" text-anchor="middle" style="fill:#fff;font-size:9px">junction box: 3 bypass diodes</text></svg>';
+  $('#hsModule').innerHTML=s;
+})();
+var HC={r:5,c:1};
+function renderHot(){
+  var h=hotspot(HS),T=h.Tat(HS.t);
+  for(var r=0;r<24;r++)for(var c=0;c<6;c++){
+    var d=Math.max(Math.abs(r-HC.r)*0.9,Math.abs(c-HC.c)*1.6),Tc;
+    if(r===HC.r&&c===HC.c)Tc=T;else if(d<=1.7&&(r<12)===(HC.r<12))Tc=h.Tm+(T-h.Tm)*0.22/d;else Tc=h.Tm+((c===HC.c||c===HC.c+1)&&h.bypass?-1.5:0);
+    var e=document.getElementById('hc-'+r+'-'+c);if(e)e.setAttribute('fill',irColor(Tc));
+  }
+  var lf=$('#hcLeaf'),x=8+HC.c*34.3+16,y=8+HC.r*11.8+5;
+  lf.setAttribute('cx',x.toFixed(1));lf.setAttribute('cy',y.toFixed(1));lf.setAttribute('rx',(3+14*HS.s).toFixed(1));lf.setAttribute('ry',(2+4*HS.s).toFixed(1));lf.setAttribute('opacity',HS.s>0.01?'0.8':'0');
+  var t10=h.tTo(h.Tm+10),t85=h.tTo(85),t150=h.tTo(150),dT=T-h.Tm;
+  function tt(x){return x==null?'not reached':(x<1?'< 1 min':f1(x)+' min')}
+  var coa=dT>=20?['CoA 3 range','bad']:dT>=10?['CoA 2 range','warn']:['no abnormality','good'];
+  $('#hsStats').innerHTML=
+    stat('Heat in the cell',f1(h.P)+' W','reverse '+f1(h.vr)+' V')+
+    stat('Cell now',r0(T)+' °C','at '+r0(HS.t)+' min',T>=85?'bad':(dT>=10?'warn':'good'))+
+    stat('Steady hot spot',r0(h.Tss)+' °C','neighbours '+r0(h.Tm)+' °C',h.Tss>=150?'bad':(h.Tss>=85?'warn':''))+
+    stat('ΔT vs neighbours',f1(dT)+' K',coa[0],coa[1])+
+    stat('Time to 85 °C',tt(t85),'qualification limit',t85!=null&&t85<20?'bad':'')+
+    stat('Time to 150 °C',tt(t150),'material damage',t150!=null?'bad':'good');
+  var tp=[],sw=[],swo={},k;
+  for(k=0;k<=60;k+=1)tp.push([k,h.Tat(k)]);
+  var ymax=Math.max(160,Math.ceil(h.Tss/20)*20+20);
+  chart($('#hsTime'),{id:'hst',xmax:60,xt:6,ymin:Math.min(20,Math.floor(h.Tm/10)*10),ymax:ymax,xlabel:'Minutes since shading started',ylabel:'°C',aria:'Hot-cell temperature against time',
+    series:[{pts:tp,cls:'bad'}],
+    hlines:[{y:h.Tm+10,label:'+10 K: flag in IR',cls:'cur',left:true},{y:85,label:'85 °C qualification limit',cls:'warn',left:true},{y:150,label:'150 °C damage',cls:'bad',left:true}],
+    marks:[{x:HS.t,y:T,cls:'bad',label:r0(T)+' °C'}]});
+  var worst={s:0,P:0};
+  for(k=0;k<=100;k+=2){var hh=hotspot({G:HS.G,Ta:HS.Ta,wind:HS.wind,s:k/100,rsh:HS.rsh,diode:HS.diode});sw.push([k,hh.P]);if(hh.P>worst.P)worst={s:k,P:hh.P}}
+  var others=Object.keys(RSH).filter(function(q){return RSH[q][0]!==HS.rsh}).map(function(q){var a=[];for(k=0;k<=100;k+=2)a.push([k,hotspot({G:HS.G,Ta:HS.Ta,wind:HS.wind,s:k/100,rsh:RSH[q][0],diode:HS.diode}).P]);return {pts:a,cls:'gh'}});
+  var pmx=Math.max(20,Math.ceil(Math.max(worst.P,others.reduce(function(m,o){return Math.max(m,Math.max.apply(null,o.pts.map(function(p){return p[1]})))},0))*1.15/10)*10);
+  chart($('#hsSweep'),{id:'hsw',xmax:100,xt:5,ymax:pmx,xlabel:'Part of the cell covered (%)',ylabel:'Heat in the cell (W)',aria:'Heat in the shaded cell against shading',
+    series:others.concat([{pts:sw,cls:'bad'}]),marks:[{x:worst.s,y:worst.P,cls:'ring',r:9},{x:HS.s*100,y:h.P,cls:'bad',label:f1(h.P)+' W'}]});
+  var mq=hotspot({G:1000,Ta:HS.Ta,wind:1,s:worst.s/100,rsh:HS.rsh,diode:HS.diode});
+  var mqT60=mq.Tat(60);
+  var html='<p>With '+r0(HS.s*100)+' % of the cell covered, the cell can only make '+f1(h.IL)+' A but the string pushes '+f1(h.Ih)+' A through its half of the module. The cell is driven to '+f1(h.vr)+' V in reverse and turns '+f1(h.P)+' W into heat in an area of about 137 cm². '+(HS.diode==='ok'?(h.bypass?'The bypass diode has switched on and limits the reverse voltage to '+f1(h.vcl)+' V (23 cells plus the diode), but the cell still heats.':'The bypass diode has not switched on yet; the cell absorbs the difference itself.'):'The bypass diode has failed open, so only the cell\'s own breakdown (about 20 V here) limits the reverse voltage. This is the dangerous case.')+'</p>';
+  html+='<p><b>When the hot spot forms.</b> The cell reaches +10 K over its neighbours after '+tt(t10)+', which is the usual point where an IR survey flags a hot cell (IEC TS 62446-3 classifies findings as CoA 1–3; the ΔT bands shown here follow common field practice). It passes 85 °C, the top of the IEC 61215 thermal-cycling and damp-heat range, after '+tt(t85)+', and 150 °C, where encapsulant and backsheet damage become likely, after '+tt(t150)+'. Steady state is '+r0(h.Tss)+' °C after about '+r0(h.tau*3)+' minutes (three time constants). Solder melts at 183 °C (tin-lead) and 217 °C (lead-free), the limits MQT 09 checks visually.</p>';
+  html+='<p><b>Worst case.</b> For this cell the heat peaks at '+worst.s+' % coverage ('+f1(worst.P)+' W). IEC 61215-2 MQT 09 searches for exactly this worst-case shading, then exposes the module to 1000 ± 100 W/m² for 1 h (up to 5 h while temperatures still rise) at 55 ± 15 °C module temperature. In this model that cell would sit near '+r0(mqT60)+' °C after the first hour. Wind helps: at '+f1(HS.wind)+' m/s the steady hot spot is '+r0(h.Tss)+' °C.</p>';
+  html+='<p class="field">In the field: run IR inspection at stable irradiance of at least 600 W/m² (IEC TS 62446-3), remove the cause of local shading or dirt, and replace modules with cells that keep running hot when clean.</p>';
+  $('#hsText').innerHTML=html;
+}
+function hsStep(dt){if(!HS.play)return;HS.t=Math.min(60,HS.t+dt*2);HS.tSl.set(HS.t);renderHot();if(HS.t>=60){HS.play=false;$('#hsPlay').textContent='Play 60 minutes'}}
+
+/* ================= FAULTS ================= */
+var FT={type:'healthy',s:1,m:3,G:900,Ta:32,soil:15,rs:0.6,shade:60};
+var FTYPES=[['healthy','Healthy'],['shade','Partial shading'],['soil','Soiling'],['hot','Hot-spot cell'],['dshort','Bypass diode shorted'],['dopen','Bypass diode open + shade'],['openstr','Open string'],['ll','Line-line fault'],['rs','Loose connector (series R)']];
+var fSl={};
+(function(){
+  mkChips($('#fChips'),FTYPES,FT.type,function(k){FT.type=k;syncFaultUI();renderFaults()});
+  var ms=$('#fM');for(var m=0;m<6;m++)ms.appendChild(el('<option value="'+m+'">M'+(m+1)+'</option>'));ms.value='3';
+  $('#fS').addEventListener('change',function(){FT.s=+this.value;renderFaults()});
+  $('#fM').addEventListener('change',function(){FT.m=+this.value;renderFaults()});
+  var c=$('#fCtl');
+  fSl.shade=mkSlider(c,{id:'fSh',label:'Shade on the module',min:10,max:95,step:1,value:FT.shade,unit:' %',onInput:function(v){FT.shade=v;renderFaults()}});
+  fSl.soil=mkSlider(c,{id:'fSo',label:'Dust on all modules',min:0,max:40,step:1,value:FT.soil,unit:' %',onInput:function(v){FT.soil=v;renderFaults()}});
+  fSl.rs=mkSlider(c,{id:'fRs',label:'Extra resistance per module',min:0.1,max:2,step:0.05,value:FT.rs,unit:' Ω',dec:2,onInput:function(v){FT.rs=v;renderFaults()}});
+  mkSlider(c,{id:'fG',label:'Irradiance',min:200,max:1100,step:10,value:FT.G,unit:' W/m²',onInput:function(v){FT.G=v;renderFaults()}});
+  mkSlider(c,{id:'fTa',label:'Air temperature',min:10,max:48,step:1,value:FT.Ta,unit:' °C',onInput:function(v){FT.Ta=v;renderFaults()}});
+  $('#fIR').addEventListener('change',renderFaults);
+  $('#fScene').innerHTML=arraySVG('ft',false);
+})();
+function syncFaultUI(){
+  var t=FT.type;
+  fSl.shade.set(FT.shade);
+  $('#fSh').closest('label').hidden=!(t==='shade'||t==='dopen');
+  $('#fSo').closest('label').hidden=t!=='soil';
+  $('#fRs').closest('label').hidden=t!=='rs';
+  $('#fM').closest('label').hidden=(t==='healthy'||t==='soil'||t==='openstr'||t==='ll'||t==='rs');
+  $('#fS').closest('label').hidden=(t==='healthy'||t==='soil');
+}
+function faultScenario(){
+  var S=scenario({G:FT.G,Ta:FT.Ta}),t=FT.type,s=FT.s,m=FT.m,f=FT.shade/100;
+  if(t==='shade')S.sh[s][m]=[f,f,f];
+  if(t==='soil')S.soil=FT.soil/100;
+  if(t==='hot'){S.sh[s][m][1]=0.3}
+  if(t==='dshort')S.diode[s+'-'+m+'-1']='short';
+  if(t==='dopen'){S.diode[s+'-'+m+'-1']='open';S.sh[s][m][1]=f}
+  if(t==='openstr')S.openStr=s;
+  if(t==='ll')S.ll={s:s,k:2};
+  if(t==='rs')S.rs[s]=FT.rs;
+  return S;
+}
+function strChecks(A){
+  return A.strings.map(function(st){
+    if(st.open)return {voc:0,isc:0};
+    var voc=0,lo=0,hi=st.imax;for(var k=0;k<40;k++){var mid=(lo+hi)/2;if(strV(st,mid)>0)lo=mid;else hi=mid}
+    voc=strV(st,0);return {voc:voc,isc:lo};
+  });
+}
+function renderFaults(){
+  syncFaultUI();
+  var S=faultScenario(),A=build(S),c=arrCurve(A,170),Ah=build(scenario({G:FT.G,Ta:FT.Ta})),ch=arrCurve(Ah,170);
+  var V=c.best.v,Is=A.strings.map(function(st){return strI(st,V)}),Ih=strI(Ah.strings[0],ch.best.v);
+  var hs=null,dopenP=0;
+  if(FT.type==='hot')hs=hotspot({G:FT.G,Ta:FT.Ta,wind:1,s:0.3,rsh:4,diode:'ok'});
+  if(FT.type==='dopen'){var sub=A.strings[FT.s].mods[FT.m].subs[1];var vv=subV(sub,Is[FT.s]);if(vv<0)dopenP=-vv*Is[FT.s];
+    hs={Tss:tCell(FT.Ta,FT.G)+dopenP*0.06*1.2,Tm:tCell(FT.Ta,FT.G)}}
+  paintArray('ft',S,A,V,{ir:$('#fIR').checked,hot:hs?{s:FT.s,m:FT.m,k:1,T:hs.Tss}:null});
+  var chk=strChecks(A),chkH=strChecks(Ah)[0];
+  /* diagnosis from the simulated measurements only */
+  var dx=null,sig=[],field='',i;
+  var isc=chk.map(function(x){return x.isc}),voc=chk.map(function(x){return x.voc});
+  var iscMean=isc.reduce(function(a,b){return a+b},0)/3;
+  for(i=0;i<3&&!dx;i++)if(chk[i].voc<1&&chk[i].isc<0.1){dx=['Open circuit in string S'+(i+1),'bad'];sig=['String S'+(i+1)+' reads 0 V and 0 A at the combiner','Other strings normal'];field='Check fuse, connectors and cable of S'+(i+1)+' (continuity, IEC 62446-1).'}
+  for(i=0;i<3&&!dx;i++)if(Is[i]<-0.2||voc[i]<chkH.voc*0.8){dx=['Line-line fault in string S'+(i+1),'bad'];sig=['S'+(i+1)+' open-circuit voltage '+r0(voc[i])+' V vs '+r0(chkH.voc)+' V expected (about '+r0((chkH.voc-voc[i])/(chkH.voc/6))+' modules missing)','Reverse current '+f1(Is[i])+' A from the other strings'];field='Isolate the string; the string fuses (IEC 62548) must interrupt the reverse current. Inspect for cable insulation damage.'}
+  for(i=0;i<3&&!dx;i++){var dv=chkH.voc-voc[i];if(dv>chkH.voc/6/3*0.6&&dv<chkH.voc/6*1.3&&Math.abs(isc[i]-chkH.isc)<0.05*chkH.isc){dx=['Shorted bypass diode in string S'+(i+1),'warn'];sig=['S'+(i+1)+' Voc low by '+f1(dv)+' V ≈ one substring (about '+f1(chkH.voc/18)+' V)','Isc normal, no extra heat'];field='Measure the module Voc in S'+(i+1)+' one by one; replace the junction box or diode. IR will not show it.'}}
+  if(!dx&&hs&&FT.type==='hot'){dx=['Hot-spot risk in S'+(FT.s+1)+'-M'+(FT.m+1),'bad'];sig=['Electrical loss only '+f1(100*(1-c.best.p/ch.best.p))+' %','IR: one cell at about '+r0(hs.Tss)+' °C vs '+r0(hs.Tm)+' °C around it'];field='Confirm with IR at ≥ 600 W/m² (IEC TS 62446-3), clean the module, replace if the cell stays hot.'}
+  if(!dx&&FT.type==='dopen'&&dopenP>1){dx=['Failed bypass diode with shading in S'+(FT.s+1)+'-M'+(FT.m+1),'bad'];sig=['Shaded substring forced into reverse: about '+r0(dopenP)+' W of heat','Module current set by the shaded cells, no step in the curve'];field='Shut down the string, test the diode out of circuit; severe hot-spot and fire risk (IEC 61730).'}
+  var minI=Math.min.apply(null,isc),maxI=Math.max.apply(null,isc);
+  if(!dx&&(c.peaks>1||maxI-minI>0.05*maxI||countBypass(bypassMap(A,V))>0)){var w=isc.indexOf(minI);dx=['Partial shading or mismatch on string S'+(w+1),'warn'];sig=[c.peaks+' power peak'+(c.peaks>1?'s':'')+' in the array curve',countBypass(bypassMap(A,V))+' bypass diodes conducting at the maximum'];field='Look for shadows, dirt patches or cracked modules on S'+(w+1)+'; compare string currents at the same time of day.'}
+  if(!dx&&iscMean<chkH.isc*0.95&&Math.abs(voc[0]-chkH.voc)<0.03*chkH.voc){dx=['Uniform loss: soiling or lower irradiance','warn'];sig=['All strings Isc '+f1(100*(1-iscMean/chkH.isc))+' % below expected','Voc normal, single power peak'];field='Check the pyranometer reading first; if irradiance is right, clean the modules.'}
+  if(!dx&&c.ff<ch.ff*0.97){dx=['Higher series resistance (connection) in string S'+(FT.s+1),'warn'];sig=['Fill factor '+f1(c.ff*100)+' % vs '+f1(ch.ff*100)+' %','Voc and Isc normal, curve knee rounded'];field='Check MC4 connectors and terminals with IR (warm spots) and torque; compare string I–V curves.'}
+  if(!dx){dx=['No fault detected','good'];sig=['Strings match each other and the expected values'];field='Keep monitoring (IEC 61724-1).'}
+  $('#fDx').innerHTML='<div class="dx-head"><h3>Diagnosis</h3><span class="pill '+dx[1]+'">'+(dx[1]==='good'?'healthy':dx[1]==='warn'?'attention':'act now')+'</span></div><b style="font:600 18px var(--f-display)">'+dx[0]+'</b><ul class="plain">'+sig.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul><p class="note">'+field+'</p>';
+  var loss=100*(1-c.best.p/ch.best.p);
+  $('#fStats').innerHTML=
+    stat('Max power',r0(c.best.p)+' W','healthy '+r0(ch.best.p)+' W')+
+    stat('Power lost',f1(Math.max(0,loss))+' %','',loss>5?'bad':(loss<0.5?'good':''))+
+    stat('Array Voc',r0(c.voc)+' V','healthy '+r0(ch.voc)+' V')+
+    stat('Array Isc',f1(c.isc)+' A','healthy '+f1(ch.isc)+' A')+
+    stat('Fill factor',f1(c.ff*100)+' %','healthy '+f1(ch.ff*100)+' %')+
+    stat('Power peaks',c.peaks,'',c.peaks>1?'bad':'');
+  chart($('#fChart'),{id:'fc',xmax:Math.ceil(ch.voc/50)*50,xt:5,ymax:Math.ceil(ch.isc*1.15/5)*5,y2:{max:Math.ceil(ch.best.p*1.15/1000)*1000,label:'P (W)',c:'p'},xlabel:'Array voltage (V)',ylabel:'I (A)',ylc:'c',aria:'Array I–V and P–V with fault',
+    series:[{pts:ch.pts,cls:'gh'},{pts:ch.pw,cls:'gh',ax:'y2'},{pts:c.pts,cls:'cur'},{pts:c.pw,cls:'pow',ax:'y2'}],marks:[{x:V,y:c.best.p,ax:'y2',cls:'pow'}]});
+  var mx=Math.max(Ih*1.2,1),bars='';
+  Is.forEach(function(I,i){var w=clamp(Math.abs(I)/mx*100,0,100);bars+='<div class="bar"><span>S'+(i+1)+'</span><span class="tr"><span class="fl" style="left:0;width:'+w.toFixed(1)+'%;background:'+(I<0?'var(--bad)':'var(--s'+(i+1)+')')+'"></span></span><span class="v">'+f1(I)+' A</span></div>'});
+  bars+='<p class="note">Expected per string: '+f1(Ih)+' A. '+(Is.some(function(I){return I<0})?'Red = current flowing backwards into the string.':'')+'</p>';
+  $('#fBars').innerHTML=bars;
+  var tb='<thead><tr><th>String</th><th>Voc (V)</th><th>Isc (A)</th><th>Status</th></tr></thead><tbody>';
+  chk.forEach(function(x,i){var ok=Math.abs(x.voc-chkH.voc)<0.03*chkH.voc&&Math.abs(x.isc-chkH.isc)<0.05*chkH.isc;
+    tb+='<tr><td>S'+(i+1)+'</td><td class="num">'+r0(x.voc)+'</td><td class="num">'+f1(x.isc)+'</td><td>'+(ok?'<span class="pill good">within 3–5 %</span>':'<span class="pill warn">check</span>')+'</td></tr>'});
+  tb+='<tr><td>Expected</td><td class="num">'+r0(chkH.voc)+'</td><td class="num">'+f1(chkH.isc)+'</td><td></td></tr></tbody>';
+  $('#fTable').innerHTML=tb;
+}
+
+/* ================= MPPT ================= */
+var M={algo:'po',G:850,Ta:32,step:3,shade:false,run:true,cloudUntil:0,V:0,prevV:0,prevP:0,prevI:0,dir:-1,first:true,hist:[],trail:[],key:'',c:null,A:null,n:0};
+var DT=0.08,NH=220;
+function mpptCurve(){
+  var cloud=performance.now()<M.cloudUntil,G=M.G*(cloud?0.3:1),key=r0(G)+'|'+M.Ta+'|'+M.shade;
+  if(key!==M.key){var S=scenario({G:G,Ta:M.Ta});if(M.shade){[0,1].forEach(function(m){S.sh[0][m]=[0.8,0.8,0.8]})}
+    M.A=build(S);M.c=arrCurve(M.A,220);M.key=key}
+  return M.c;
+}
+function mReset(){var c=mpptCurve();M.V=c.voc*0.92;M.prevV=M.V;M.prevP=0;M.prevI=0;M.dir=-1;M.first=true;M.hist=[];M.trail=[];M.n=0}
+function gScan(){var c=mpptCurve();M.V=c.best.v;M.first=true}
+function tick(){
+  var c=mpptCurve(),V=M.V,I=Math.max(0,arrI(M.A,V)),P=V*I;
+  M.hist.push({p:P,pm:c.best.p});if(M.hist.length>NH)M.hist.shift();
+  M.trail.push([V,P]);if(M.trail.length>30)M.trail.shift();
+  M.n++;var nv=V;
+  if(M.algo==='scan'&&M.n%75===0){gScan();return}
+  if(M.algo==='fix'){nv=0.76*c.voc}
+  else if(M.first){nv=V+M.dir*M.step}
+  else if(M.algo==='po'||M.algo==='scan'){if(P-M.prevP<0)M.dir=-M.dir;nv=V+M.dir*M.step}
+  else{var dV=V-M.prevV,dI=I-M.prevI;
+    if(Math.abs(dV)<1e-9){nv=V+(Math.abs(dI)<1e-6?0:(dI>0?1:-1)*M.step)}
+    else{var err=dI/dV+I/Math.max(V,1);if(Math.abs(err)<0.002)nv=V;else nv=err>0?V+M.step:V-M.step}}
+  M.prevV=V;M.prevP=P;M.prevI=I;M.first=false;
+  M.V=clamp(nv,5,c.voc*0.995);
+}
+function renderMppt(){
+  var c=mpptCurve(),n=M.hist.length,last=M.hist.slice(-100);
+  var eff=0,cnt=0;last.forEach(function(x){if(x.pm>0){eff+=x.p/x.pm;cnt++}});eff=cnt?100*eff/cnt:0;
+  var cur=M.hist[n-1]||{p:0,pm:c.best.p},cloud=performance.now()<M.cloudUntil;
+  $('#mpptStats').innerHTML=
+    stat('Tracker output',(cur.p/1000).toFixed(2)+' kW','at '+r0(M.V)+' V')+
+    stat('Available',(c.best.p/1000).toFixed(2)+' kW','at '+r0(c.best.v)+' V')+
+    stat('Tracking efficiency',f1(eff)+' %','last 8 seconds',eff<90?'bad':(eff>98?'good':''))+
+    stat('Power peaks',c.peaks,c.peaks>1?'shaded array':'single peak',c.peaks>1?'bad':'');
+  var pmax=Math.max(1000,Math.ceil(c.best.p*1.15/1000)*1000),vx=Math.ceil(c.voc*1.05/50)*50;
+  var dots=M.trail.map(function(t,k){return {x:t[0],y:t[1],r:2.5,o:(0.15+0.5*k/M.trail.length).toFixed(2)}});
+  chart($('#mpptChart1'),{id:'mc1',xmax:vx,xt:6,ymax:pmax,xlabel:'Array voltage (V)',ylabel:'Power (W)',ylc:'p',aria:'Array power against voltage with tracker position',
+    series:[{pts:c.pw,cls:'pow'}],dots:dots,marks:[{x:c.best.v,y:c.best.p,cls:'ring',r:9},{x:M.V,y:cur.p,cls:'pow',r:6}]});
+  var pts=[],gp=[];M.hist.forEach(function(x,k){var t=-(n-1-k)*DT;pts.push([t,x.p]);gp.push([t,x.pm])});
+  if(pts.length<2){pts=[[-1,0],[0,0]];gp=pts}
+  chart($('#mpptChart2'),{id:'mc2',xmin:-NH*DT,xmax:0,xt:6,ymax:pmax,xlabel:'Seconds ago',ylabel:'Power (W)',ylc:'p',aria:'Tracker power over time',series:[{pts:gp,cls:'gh'},{pts:pts,cls:'pow'}]});
+  var msg;
+  if(M.algo==='fix')msg='Fixed ratio parks the array at 76 % of its open-circuit voltage. It never searches, so it misses power when temperature or shading moves the maximum.';
+  else if(eff<85&&M.shade&&c.peaks>1&&M.algo!=='scan')msg='The tracker is sitting on a local peak. The shadow made the power curve double-humped and the algorithm only compares neighbouring points. Press Global scan, or choose P&O with periodic scan.';
+  else if(cloud)msg='A cloud has cut irradiance to 30 %. The maximum moved and the tracker is following it. EN 50530 rates exactly this dynamic tracking efficiency.';
+  else if(M.algo==='scan')msg='P&O with a global scan every 6 seconds: between scans it climbs locally, and each scan jumps to the highest peak. Real inverters scan every few minutes.';
+  else if(M.algo==='po')msg='Perturb and observe nudges the voltage, checks whether power rose, and reverses if it fell. At the top it keeps stepping across the maximum; a smaller step wastes less but follows changes more slowly.';
+  else msg='Incremental conductance compares the slope dI/dV with −I/V, which is zero slope of power at the maximum, so it can hold still once it gets there.';
+  $('#mpptText').textContent=msg;
+}
+(function(){
+  mkChips($('#algoChips'),[['po','Perturb and observe'],['ic','Incremental conductance'],['scan','P&O + periodic scan'],['fix','Fixed 76 % of Voc']],M.algo,function(k){M.algo=k;M.first=true;renderMppt()});
+  var h=$('#mpptCtl');
+  mkSlider(h,{id:'mg',label:'Irradiance',min:100,max:1100,step:10,value:M.G,unit:' W/m²',onInput:function(v){M.G=v;renderMppt()}});
+  mkSlider(h,{id:'mt',label:'Air temperature',min:5,max:48,step:1,value:M.Ta,unit:' °C',onInput:function(v){M.Ta=v;renderMppt()}});
+  mkSlider(h,{id:'ms',label:'Step size',min:0.5,max:10,step:0.5,value:M.step,unit:' V',dec:1,onInput:function(v){M.step=v}});
+  $('#mShade').addEventListener('change',function(e){M.shade=e.target.checked;renderMppt()});
+  $('#mRun').addEventListener('click',function(){M.run=!M.run;this.textContent=M.run?'Pause':'Resume'});
+  $('#mCloud').addEventListener('click',function(){M.cloudUntil=performance.now()+4000});
+  $('#mScan').addEventListener('click',function(){gScan();renderMppt()});
+  $('#mReset').addEventListener('click',function(){mReset();for(var k=0;k<30;k++)tick();renderMppt()});
+})();
+
+/* ================= TEST BENCH ================= */
+var LOADS={eload:{name:'DC electronic load',spec:'80 V, 30 A, 1 kW, CR mode',short:'DC e-load',rmin:0.05,rmax:60,imax:30,vmax:80,pmax:1000},rheo2:{name:'Rheostat 0–10 Ω, 25 A, 1 kW',spec:'0–10 Ω, 25 A, 1 kW',short:'rheostat 25 A',rmin:0.1,rmax:10,imax:25,vmax:null,pmax:1000},rheo:{name:'Rheostat 20 Ω, 10 A (present lab)',spec:'0–20 Ω, 10 A',short:'rheostat 10 A',rmin:0.5,rmax:20,imax:10,vmax:null,pmax:2000}};
+var BN={G:820,Ta:30,R:14,sweep:false,pts:[],load:'eload'};
+var BF=[];
+(function(){
+  var c=$('#bnCtl');
+  mkChips($('#bnLoad'),Object.keys(LOADS).map(function(k){return [k,LOADS[k].name]}),BN.load,function(k){BN.load=k;BN.sweep=false;$('#bnSweep').textContent='Sweep the load';BN.pts=[];makeRSlider();renderBench()});
+  makeRSlider();
+  mkSlider(c,{id:'bnG',label:'Irradiance',min:100,max:1100,step:10,value:BN.G,unit:' W/m²',onInput:function(v){BN.G=v;renderBench()}});
+  mkSlider(c,{id:'bnT',label:'Air temperature',min:10,max:48,step:1,value:BN.Ta,unit:' °C',onInput:function(v){BN.Ta=v;renderBench()}});
+  $('#bnSweep').addEventListener('click',function(){BN.sweep=!BN.sweep;if(BN.sweep){var L=LOADS[BN.load];BN.R=L.rmax;BN.rSl.set(L.rmax);BN.pts=[]}this.textContent=BN.sweep?'Stop sweep':'Sweep the load'});
+  $('#bnClear').addEventListener('click',function(){BN.pts=[];renderBench()});
+  var s='<svg viewBox="0 0 640 230" role="img" aria-label="Test bench wiring: module, current probe, rheostat, voltage sensor and logger">';
+  s+='<rect x="0" y="0" width="640" height="230" fill="var(--sky2)"/>';
+  s+='<g transform="translate(18,40)"><rect x="0" y="0" width="92" height="130" rx="3" fill="var(--cell)" stroke="var(--frame)" stroke-width="3"/>';
+  for(var k=1;k<6;k++)s+='<line x1="'+(k*92/6).toFixed(1)+'" y1="0" x2="'+(k*92/6).toFixed(1)+'" y2="130" stroke="var(--cellLine)"/>';
+  s+='<line x1="0" y1="65" x2="92" y2="65" stroke="var(--cellLine)"/><text x="46" y="148" text-anchor="middle" class="tk">565 W module</text></g>';
+  var top='M110 70 H 470 V 100',bot='M470 150 V 190 H 110';
+  s+='<path d="'+top+'" fill="none" stroke="#D62828" stroke-width="5"/><path d="'+bot+'" fill="none" stroke="#1A1A1A" stroke-width="5"/>';
+  s+='<path id="bn-f1" d="'+top+'" class="flow" stroke="#FFD1D1" stroke-width="3" stroke-dasharray="1 12"/><path id="bn-f2" d="'+bot+'" class="flow" stroke="#BFC7CF" stroke-width="3" stroke-dasharray="1 12"/>';
+  s+='<ellipse cx="200" cy="70" rx="12" ry="18" fill="none" stroke="var(--ink)" stroke-width="4"/><text x="200" y="40" text-anchor="middle" class="tk">Tektronix probe</text>';
+  s+='<path d="M200 88 V 205 H 300" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 3"/>';
+  s+='<rect x="430" y="100" width="80" height="50" rx="20" fill="#8DB580" stroke="#4F7A44" stroke-width="2"/><text id="bn-loadlbl" x="470" y="129" text-anchor="middle" style="fill:#1E3A18;font-size:10px">load</text>';
+  s+='<rect x="300" y="110" width="96" height="44" rx="4" fill="#2E8B3E"/><text x="348" y="128" text-anchor="middle" style="fill:#fff;font-size:10px">voltage sensor</text><text x="348" y="142" text-anchor="middle" style="fill:#E8F5E9;font-size:9px">LEM LV 20-P</text>';
+  s+='<path d="M340 70 V 110 M356 154 V 190" stroke="var(--muted)" stroke-width="2" fill="none"/>';
+  s+='<rect x="530" y="20" width="100" height="70" rx="6" fill="#2C3E73"/><text x="580" y="38" text-anchor="middle" style="fill:#fff;font-size:10px">Hioki LR8431</text>';
+  s+='<text id="bn-ch9" x="580" y="58" text-anchor="middle" style="fill:#C9B8FF;font-size:10px"></text><text id="bn-ch10" x="580" y="76" text-anchor="middle" style="fill:#C9B8FF;font-size:10px"></text>';
+  s+='<path d="M300 205 H 520 V 90 M396 132 H 540 V 90" fill="none" stroke="#7A3E9D" stroke-width="2"/>';
+  s+='<text id="bn-lbl" x="290" y="62" class="tk" style="font-weight:600"></text></svg>';
+  $('#bnScene').innerHTML=s;
+  BF=flowSet(['bn-f1','bn-f2']);
+})();
+function makeRSlider(){
+  var L=LOADS[BN.load],w=$('#bnRwrap');w.innerHTML='';
+  BN.R=clamp(BN.R,L.rmin,L.rmax);
+  BN.rSl=mkSlider(w,{id:'bnR',label:'Load resistance ('+L.short+')',min:L.rmin,max:L.rmax,step:L.rmax>20?0.05:0.05,value:BN.R,unit:' Ω',dec:2,onInput:function(v){BN.R=v;renderBench()}});
+}
+function benchSolve(){
+  var st=single(1,BN.G,BN.Ta,0.25),A=makeA([st],BN.G,BN.Ta,tCell(BN.Ta,BN.G)),c=arrCurve(A,160),s0=A.strings[0];
+  var lo=0,hi=s0.imax;for(var k=0;k<40;k++){var mid=(lo+hi)/2;if(strV(s0,mid)-mid*BN.R>0)lo=mid;else hi=mid}
+  return {c:c,I:lo,V:lo*BN.R};
+}
+function renderBench(){
+  var b=benchSolve(),I=b.I,V=b.V,P=V*I;
+  BF.forEach(function(f){flowSpeed(f,I,8,2.5)});
+  $('#bn-lbl').textContent=f1(I)+' A';
+  $('#bn-ch9').textContent='CH9 '+(I/126.67).toFixed(4)+' V';
+  $('#bn-ch10').textContent='CH10 '+(V/31).toFixed(3)+' V';
+  var L=LOADS[BN.load],oI=I>L.imax,oP=P>L.pmax,oV=L.vmax!=null&&b.c.voc>L.vmax,over=oI||oP||oV;
+  $('#bn-loadlbl').textContent=L.short;
+  $('#bnStats').innerHTML=
+    stat('Module voltage',f1(V)+' V','CH10 '+(V/31).toFixed(3)+' V raw')+
+    stat('Current',f2(I)+' A','CH9 '+(I/126.67).toFixed(4)+' V raw',oI?'bad':'')+
+    stat('Power in the load',r0(P)+' W','module max '+r0(b.c.best.p)+' W',oP?'bad':'')+
+    stat('Load rating',over?(oI?'current too high':oP?'power too high':'voltage too high'):'within rating',L.spec,over?'bad':'good')+
+    stat('Maximum power R',f1(b.c.best.v/Math.max(b.c.best.i,0.01))+' Ω','load for MPP');
+  var vl=[[0,0],[b.c.voc,b.c.voc/BN.R]];
+  chart($('#bnChart'),{id:'bnc',xmax:Math.ceil(b.c.voc*1.05/5)*5,xt:6,ymax:Math.ceil(b.c.isc*1.2),xlabel:'Module voltage (V)',ylabel:'Current (A)',ylc:'c',aria:'Module I–V curve with rheostat load line',
+    series:[{pts:b.c.pts,cls:'cur'},{pts:vl,cls:'gh'}],scatter:[{pts:BN.pts,cls:'bad',r:3.5}],
+    hlines:L.imax<b.c.isc*1.2?[{y:L.imax,label:L.imax+' A load rating',cls:'bad'}]:[],marks:[{x:V,y:I,cls:'pow',label:f1(V)+' V, '+f1(I)+' A'}]});
+  var rr=L.rmin+' to '+L.rmax+' Ω';
+  $('#bnText').textContent='The operating point sits where the module curve crosses the load line I = V/R. At '+f2(BN.R)+' Ω the module gives '+f1(V)+' V and '+f2(I)+' A. Lowering R moves the point left towards short circuit; the maximum power point needs about '+f1(b.c.best.v/Math.max(b.c.best.i,0.01))+' Ω. The '+L.name.toLowerCase()+' covers '+rr+'. '+(b.c.isc>L.imax?'Here the short-circuit current ('+f1(b.c.isc)+' A) is above its '+L.imax+' A rating, so a full sweep is only safe at lower irradiance; use the 25–30 A load for full sun.':'The short-circuit current ('+f1(b.c.isc)+' A) stays within its '+L.imax+' A rating, so the whole curve from Isc to near Voc can be swept.');
+  var rt='<thead><tr><th>Quantity</th><th>Module value</th><th>Load must handle</th><th>Recommended</th></tr></thead><tbody>'+
+    '<tr><td>Voltage</td><td class="num">Voc 50 V (≈ 53 V cold morning)</td><td class="num">≥ 60 V</td><td class="num">80 V</td></tr>'+
+    '<tr><td>Current</td><td class="num">Isc 14 A (≈ 16 A with rear light)</td><td class="num">≥ 1.25 × Isc ≈ 20 A</td><td class="num">25–30 A</td></tr>'+
+    '<tr><td>Power</td><td class="num">565 W nameplate</td><td class="num">≥ 1.25 × Pmax ≈ 710 W</td><td class="num">800 W–1 kW</td></tr>'+
+    '<tr><td>Resistance range</td><td class="num">MPP ≈ 42 V / 13.2 A ≈ 3.2 Ω</td><td class="num">≈ 0.1 Ω (near Isc) to ≥ 50 Ω (near Voc)</td><td class="num">CR mode 0.05–60 Ω</td></tr>'+
+    '<tr><td>One string (6 modules)</td><td class="num">Voc ≈ 300–320 V, Isc 14 A, 3.4 kW</td><td class="num">≥ 400 V, ≥ 20 A, ≥ 4 kW</td><td class="num">DC load 500 V, 30 A, 5 kW</td></tr>'+
+    '<tr><td>Whole array (3 strings)</td><td class="num">Voc ≈ 300–320 V, Isc 42 A, 10.2 kW</td><td class="num">≥ 400 V, ≥ 55 A, ≥ 12 kW</td><td class="num">Use the inverter or a 15 kW PV load emulator</td></tr></tbody>';
+  $('#bnRate').innerHTML=rt;
+}
+function benchStep(dt){
+  if(!BN.sweep)return;
+  var L=LOADS[BN.load];
+  BN.R=Math.max(L.rmin,BN.R*Math.pow(0.82,dt*1.6));BN.rSl.set(BN.R);
+  var b=benchSolve();if(b.I<=L.imax*1.02&&(BN.pts.length===0||Math.hypot(BN.pts[BN.pts.length-1][0]-b.V,(BN.pts[BN.pts.length-1][1]-b.I)*3)>0.3))BN.pts.push([b.V,b.I]);
+  renderBench();
+  if(BN.R<=L.rmin+1e-6||b.I>L.imax*1.02){BN.sweep=false;$('#bnSweep').textContent='Sweep the load'}
+}
+
+/* ================= LIFE (from the first PV Lab) ================= */
+var L={d:0.4,lid:1,T:35,yld:1600,kwp:10.2,eta:50};
+(function(){
+  var host=$('#lifeCtl');
+  mkSlider(host,{id:'ld',label:'Fade per year',min:0.1,max:2,step:0.05,value:L.d,unit:' %',dec:2,onInput:function(v){L.d=v;renderLife()}});
+  mkSlider(host,{id:'llid',label:'First-year light-induced loss',min:0,max:4,step:0.1,value:L.lid,unit:' %',dec:1,onInput:function(v){L.lid=v;renderLife()}});
+  mkSlider(host,{id:'lt',label:'Average cell temperature',min:20,max:65,step:1,value:L.T,unit:' °C',onInput:function(v){L.T=v;renderLife()}});
+  host.appendChild(el('<p class="sl-hint">Fade doubles for every 10 °C above 35 °C (rule of thumb).</p>'));
+  mkSlider(host,{id:'leta',label:'Typical lifetime before wear-out',min:25,max:80,step:1,value:L.eta,unit:' years',onInput:function(v){L.eta=v;renderLife()}});
+  mkSlider(host,{id:'ly',label:'Site yield',min:1000,max:2200,step:50,value:L.yld,unit:' kWh/kWp/yr',onInput:function(v){L.yld=v;renderLife()}});
+  mkSlider(host,{id:'lk',label:'Plant size',min:1,max:100,step:0.1,value:L.kwp,unit:' kWp',dec:1,onInput:function(v){L.kwp=v;renderLife()}});
+})();
+function renderLife(){
+  var dEff=L.d*Math.pow(2,(L.T-35)/10);
+  function ret(t){return Math.max(0,1-L.lid/100*Math.min(t,1)-dEff/100*Math.max(t-1,0))}
+  function sur(t){return Math.exp(-Math.pow(t/L.eta,3))}
+  var N=30,p1=[],p2=[],i;
+  for(i=0;i<=N*4;i++){var t=i/4;p1.push([t,ret(t)*100]);p2.push([t,sur(t)*100])}
+  var t80=L.lid/100>=0.2?1:1+(0.2-L.lid/100)/(dEff/100);
+  var e=0,ee=0;
+  for(i=1;i<=25;i++){var y=L.yld*L.kwp*ret(i-0.5);e+=y;ee+=y*sur(i-0.5)}
+  var r25=ret(25)*100,s25=sur(25)*100,ymin=Math.max(0,Math.floor((Math.min(r25,80)-5)/5)*5);
+  $('#lifeStats').innerHTML=
+    stat('Power at 25 years',f1(r25)+' %','of new',r25<80?'bad':'good')+
+    stat('Reaches 80 %',t80>60?'over 60 yr':f1(t80)+' yr','end-of-life line',t80<25?'bad':'')+
+    stat('Still working at 25 y',f1(s25)+' %','chance per module',s25<80?'bad':'')+
+    stat('25-year energy',f1(e/1000)+' MWh','if nothing fails')+
+    stat('With failures',f1(ee/1000)+' MWh',r0(100*ee/e)+' % of the above');
+  chart($('#lifeChart1'),{id:'lc1',xmax:30,xt:6,ymin:ymin,ymax:100,xlabel:'Years in service',ylabel:'% of new power',aria:'Power retention against years in service',
+    hlines:[{y:80,label:'80 %'}],series:[{pts:p1,cls:'pow'}],marks:[{x:25,y:r25,cls:'pow',label:f1(r25)+' % at 25 y'}]});
+  chart($('#lifeChart2'),{id:'lc2',xmax:30,xt:6,ymin:0,ymax:100,xlabel:'Years in service',ylabel:'% of modules working',aria:'Survival probability against years in service',
+    series:[{pts:p2,cls:'cur'}],marks:[{x:25,y:s25,cls:'cur',label:f1(s25)+' % at 25 y'}]});
+  var hot=L.T>35?'The hot site speeds fade to '+dEff.toFixed(2)+' % per year. ':(L.T<35?'The cool site slows fade to '+dEff.toFixed(2)+' % per year. ':'');
+  $('#lifeText').textContent=hot+'Power drops fast in the first year (light-induced loss), then follows a steady line. The survival curve is separate: it stays flat for years, then falls as wear-out failures such as cracked cells, delamination, hot-spot damage and failed junction boxes pile up. '+
+    (t80<25?'With these settings the module reaches 80 % before 25 years, so it would fall short of a typical warranty line.':'With these settings the module keeps above 80 % for the whole 25 years.');
+}
+
+/* ================= tabs and loop ================= */
+/* ================= SUN & SHADOW ================= */
+var D2R=Math.PI/180;
+var SITE={lat:23.22,lon:72.65,mer:82.5,name:'IIT Gandhinagar'};
+var SU={doy:80,t:9.0,useB:true,useT:true,bH:3.5,bD:1.5,bL:6,tH:5,tR:1.8,tD:3,tau:0.25,mount:'fixed',tilt:20,mit:'global',Ta:30,play:false,day:null,dayKey:''};
+var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],MDAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+function doyName(n){var m=0;while(m<11&&n>MDAYS[m]){n-=MDAYS[m];m++}return n+' '+MONTHS[m]}
+function clock(h){var hh=Math.floor(h+1e-9),mm=Math.round((h-hh)*60);if(mm===60){hh++;mm=0}return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm}
+function sunPos(doy,hIST){
+  var B=2*Math.PI*(doy-81)/364,eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+  var dec=23.45*Math.sin(2*Math.PI*(284+doy)/365)*D2R,phi=SITE.lat*D2R;
+  var corr=4*(SITE.lon-SITE.mer)+eot,st=hIST+corr/60,w=15*(st-12)*D2R;
+  var se=Math.sin(phi)*Math.sin(dec)+Math.cos(phi)*Math.cos(dec)*Math.cos(w),e=Math.asin(clamp(se,-1,1));
+  var ca=(Math.sin(dec)-se*Math.sin(phi))/(Math.cos(e)*Math.cos(phi)),A=Math.acos(clamp(ca,-1,1));if(w>0)A=2*Math.PI-A;
+  return {e:e,A:A,dec:dec,eot:eot,corr:corr,st:st,w:w,s:[Math.sin(A)*Math.cos(e),Math.cos(A)*Math.cos(e),Math.sin(e)]};
+}
+/* surface normal: fixed tilt facing south, or one-axis tracker (N-S axis, turns east to west, ±55°) */
+function surf(sp){
+  if(SU.mount==='track'){var rho=clamp(Math.atan2(sp.s[0],Math.max(sp.s[2],1e-6)),-55*D2R,55*D2R);return {n:[Math.sin(rho),0,Math.cos(rho)],tilt:Math.abs(rho),rho:rho}}
+  var b=SU.tilt*D2R;return {n:[0,-Math.sin(b),Math.cos(b)],tilt:b,rho:0};
+}
+/* clear-sky light on the module plane */
+function poa(sp){
+  if(sp.e<=0.005)return {g:0,beam:0,diff:0,dni:0,ghi:0,dhi:0,ct:0,am:0};
+  var ed=sp.e/D2R,am=1/(Math.sin(sp.e)+0.50572*Math.pow(ed+6.07995,-1.6364));
+  var dni=0.85*1353*Math.pow(0.7,Math.pow(am,0.678)),dhi=0.12*dni,ghi=dni*Math.sin(sp.e)+dhi;
+  var S=surf(sp),ct=S.n[0]*sp.s[0]+S.n[1]*sp.s[1]+S.n[2]*sp.s[2];
+  var beam=dni*Math.max(0,ct),diff=dhi*(1+Math.cos(S.tilt))/2+ghi*0.2*(1-Math.cos(S.tilt))/2;
+  return {g:beam+diff,beam:beam,diff:diff,dni:dni,ghi:ghi,dhi:dhi,ct:ct,am:am,S:S};
+}
+/* layout on the roof (metres, x east, y north, z up from roof) */
+var MW=1.134,ML=2.278,MG=0.05,PITCH=3.6;
+function geo(){
+  var b=SU.tilt*D2R,dep=ML*Math.cos(b),rise=ML*Math.sin(b),W=6*MW+5*MG;
+  var rows=[0,1,2].map(function(r){return {y0:(2-r)*PITCH}});
+  return {W:W,dep:dep,rise:rise,rows:rows,
+    bld:{x0:W+SU.bD,x1:W+SU.bD+SU.bL,y0:rows[0].y0-0.8,y1:rows[0].y0+dep+0.8,z1:SU.bH},
+    tr:{c:[-SU.tD,rows[2].y0+dep/2,SU.tH-SU.tR],R:SU.tR,base:[-SU.tD,rows[2].y0+dep/2]}};
+}
+function hitBox(P,s,b){
+  var lo=[b.x0,b.y0,-5],hi=[b.x1,b.y1,b.z1],tmin=1e-6,tmax=1e9;
+  for(var i=0;i<3;i++){
+    if(Math.abs(s[i])<1e-9){if(P[i]<lo[i]||P[i]>hi[i])return false;continue}
+    var t1=(lo[i]-P[i])/s[i],t2=(hi[i]-P[i])/s[i];if(t1>t2){var q=t1;t1=t2;t2=q}
+    if(t1>tmin)tmin=t1;if(t2<tmax)tmax=t2;if(tmin>tmax)return false;
+  }
+  return true;
+}
+function hitSphere(P,s,c,R){var w0=c[0]-P[0],w1=c[1]-P[1],w2=c[2]-P[2],t=w0*s[0]+w1*s[1]+w2*s[2];if(t<=0)return false;return w0*w0+w1*w1+w2*w2-t*t<R*R}
+/* fraction of direct sun blocked on each bypass section (3 per module, 8 sample points each) */
+function blockMap(sp,G){
+  var out=[],nb=0,nt=0,mods=[];
+  for(var r=0;r<3;r++){out.push([]);for(var m=0;m<6;m++){out[r].push([0,0,0])}}
+  if(sp.e<=0.005)return {f:out,nb:0,nt:0,mods:[]};
+  for(r=0;r<3;r++)for(m=0;m<6;m++){
+    var x0=m*(MW+MG),y0=G.rows[r].y0,anyB=false,anyT=false,tot=0;
+    for(var k=0;k<3;k++){
+      var sum=0;
+      for(var i=0;i<2;i++)for(var j=0;j<4;j++){
+        var fy=(j+0.5)/4,P=[x0+(k+(i+0.5)/2)/3*MW,y0+fy*G.dep,0.3+fy*G.rise],blk=0;
+        if(SU.useB&&hitBox(P,sp.s,G.bld)){blk=1;anyB=true}
+        else if(SU.useT&&hitSphere(P,sp.s,G.tr.c,G.tr.R)){blk=1-SU.tau;anyT=true}
+        sum+=blk;
+      }
+      out[r][m][k]=sum/8;tot+=sum/8;
+    }
+    if(tot/3>0.1){mods.push([r,m,anyB?'b':'t']);if(anyB)nb++;else nt++}
+  }
+  return {f:out,nb:nb,nt:nt,mods:mods};
+}
+/* one moment: clear vs shaded power */
+function moment(doy,h,full){
+  var sp=sunPos(doy,h),g=poa(sp),G=geo();
+  if(g.g<3)return {sp:sp,g:g,bm:blockMap(sp,G),clear:0,glob:0,loc:0,opt:0,c:null};
+  var bm=blockMap(sp,G),bs=g.beam/g.g;
+  var Sc=scenario({G:g.g,Ta:SU.Ta,alb:0.25}),clear=arrCurve(build(Sc),full?150:60).best.p;
+  var S=scenario({G:g.g,Ta:SU.Ta,alb:0.25});
+  for(var r=0;r<3;r++)for(var m=0;m<6;m++)for(var k=0;k<3;k++)S.sh[r][m][k]=bm.f[r][m][k]*bs;
+  var A=build(S),c=arrCurve(A,full?180:90),glob=c.best.p,loc=localPeak(c).p;
+  /* module optimizers: every module at its own maximum, 98.5 % converter efficiency */
+  var T=A.T,Gr=A.Gr,opt=0,mpp1=null;
+  for(r=0;r<3;r++)for(m=0;m<6;m++){
+    var shaded=bm.f[r][m].some(function(x){return x>0});
+    if(!shaded&&mpp1!=null){opt+=mpp1;continue}
+    var subs=[0,1,2].map(function(k){return subMake(g.g,Gr,T,S.sh[r][m][k],0,'ok')});
+    var p=arrCurve(makeA([{mods:[{subs:subs,rs:0}],open:false,ll:0,rc:0}],g.g,SU.Ta,T),50).best.p;
+    if(!shaded)mpp1=p;opt+=p;
+  }
+  opt*=0.985;
+  return {sp:sp,g:g,bm:bm,clear:clear,glob:glob,loc:loc,opt:opt,c:c,A:A,S:S,bs:bs};
+}
+function pick(M){return SU.mit==='local'?M.loc:SU.mit==='opt'?M.opt:M.glob}
+var DT_DAY=1/6,T0=5.5,T1=19.5;
+function simDay(doy){
+  var key=[doy,SU.useB,SU.useT,SU.bH,SU.bD,SU.bL,SU.tH,SU.tR,SU.tD,SU.mount,SU.tilt,SU.Ta].join('|');
+  if(SU.day&&SU.dayKey===key)return SU.day;
+  var pts=[];for(var h=T0;h<=T1+1e-9;h+=DT_DAY)pts.push(Object.assign({h:h},moment(doy,h,false)));
+  function E(f){return pts.reduce(function(a,p){return a+f(p)*DT_DAY},0)/1000}
+  var wins={b:[],t:[]};['b','t'].forEach(function(w){var on=null;pts.forEach(function(p,i){var n=w==='b'?p.bm.nb:p.bm.nt,act=n>0&&p.g.g>3;
+    if(act&&!on){on={a:p.h,b:p.h,max:n,at:p.h,loss:0}}if(act){on.b=p.h;if(n>on.max){on.max=n;on.at=p.h}on.loss+=(p.clear-p.glob)*DT_DAY/1000}
+    if(!act&&on){wins[w].push(on);on=null}});if(on)wins[w].push(on)});
+  SU.day={pts:pts,Ec:E(function(p){return p.clear}),Eg:E(function(p){return p.glob}),El:E(function(p){return p.loc}),Eo:E(function(p){return p.opt}),wins:wins};
+  SU.dayKey=key;return SU.day;
+}
+/* ---- drawing the top view ---- */
+var PK=26,PX0=-11,PX1=19,PY0=-3.5,PY1=12.5;
+function PXf(x){return ((x-PX0)*PK).toFixed(1)}function PYf(y){return ((PY1-y)*PK).toFixed(1)}
+function hull(P){P=P.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1]});
+  function cr(o,a,b){return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0])}
+  var lo=[],up=[];P.forEach(function(p){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p)});
+  for(var i=P.length-1;i>=0;i--){var p=P[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p)}
+  return lo.slice(0,-1).concat(up.slice(0,-1))}
+function planSVG(M){
+  var G=geo(),sp=M.sp,W=(PX1-PX0)*PK,H=(PY1-PY0)*PK,s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Top view of the roof with the array, building, tree and their shadows">';
+  var day=sp.e>0.005;
+  s+='<rect width="'+W+'" height="'+H+'" fill="var(--sky2)"/>';
+  s+='<rect x="'+PXf(-1.2)+'" y="'+PYf(G.rows[0].y0+G.dep+1.4)+'" width="'+((G.W+2.4)*PK).toFixed(1)+'" height="'+((G.rows[0].y0+G.dep+2.8)*PK).toFixed(1)+'" fill="var(--roof)" rx="4"/>';
+  s+='<text x="'+PXf(-1.1)+'" y="'+(+PYf(-1.4)+14)+'" class="tk">Roof of the lab building (10.2 kWp)</text>';
+  if(day){
+    /* shadow displacement per metre of height: -(sinA, cosA)/tan e */
+    var dx=-Math.sin(sp.A)/Math.tan(sp.e),dy=-Math.cos(sp.A)/Math.tan(sp.e);
+    if(SU.useB){var b=G.bld,c=[[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]],pts=c.slice();
+      c.forEach(function(p){pts.push([p[0]+dx*b.z1,p[1]+dy*b.z1])});
+      s+='<path d="M'+hull(pts).map(function(p){return PXf(p[0])+','+PYf(p[1])}).join('L')+'Z" fill="var(--shade)" opacity="0.28"/>'}
+    if(SU.useT){var t=G.tr,cx=t.c[0]+dx*t.c[2],cy=t.c[1]+dy*t.c[2],ang=Math.atan2(Math.cos(sp.A),Math.sin(sp.A))*-1/D2R,rx=Math.min(400,t.R/Math.sin(sp.e));
+      s+='<line x1="'+PXf(t.base[0])+'" y1="'+PYf(t.base[1])+'" x2="'+PXf(cx)+'" y2="'+PYf(cy)+'" stroke="var(--shade)" stroke-width="'+(0.35*PK).toFixed(1)+'" opacity="0.22"/>';
+      s+='<ellipse cx="'+PXf(cx)+'" cy="'+PYf(cy)+'" rx="'+(rx*PK).toFixed(1)+'" ry="'+(t.R*PK).toFixed(1)+'" transform="rotate('+ang.toFixed(1)+' '+PXf(cx)+' '+PYf(cy)+')" fill="var(--shade)" opacity="'+(0.28*(1-SU.tau)/0.75).toFixed(2)+'"/>'}
+  }
+  for(var r=0;r<3;r++)for(var m=0;m<6;m++){
+    var x0=m*(MW+MG),y0=G.rows[r].y0;
+    s+='<rect x="'+PXf(x0)+'" y="'+PYf(y0+G.dep)+'" width="'+(MW*PK).toFixed(1)+'" height="'+(G.dep*PK).toFixed(1)+'" fill="var(--cell)" stroke="var(--frame)" stroke-width="1.5"/>';
+    for(var k=0;k<3;k++){var f=M.bm.f[r][m][k];
+      if(k)s+='<line x1="'+PXf(x0+k*MW/3)+'" y1="'+PYf(y0)+'" x2="'+PXf(x0+k*MW/3)+'" y2="'+PYf(y0+G.dep)+'" stroke="var(--cellLine)" stroke-width="0.8"/>';
+      if(f>0)s+='<rect x="'+PXf(x0+k*MW/3)+'" y="'+PYf(y0+G.dep)+'" width="'+(MW/3*PK).toFixed(1)+'" height="'+(G.dep*PK).toFixed(1)+'" fill="#000" opacity="'+(0.15+0.65*f).toFixed(2)+'"/>'}
+  }
+  for(r=0;r<3;r++)s+='<text x="'+PXf(-0.25)+'" y="'+(+PYf(G.rows[r].y0+G.dep/2)+4)+'" text-anchor="end" class="tk" style="font-weight:600">S'+(r+1)+'</text>';
+  if(SU.useB){var b2=G.bld;s+='<rect x="'+PXf(b2.x0)+'" y="'+PYf(b2.y1)+'" width="'+((b2.x1-b2.x0)*PK).toFixed(1)+'" height="'+((b2.y1-b2.y0)*PK).toFixed(1)+'" fill="var(--boxFill)" stroke="var(--boxLine)" stroke-width="2"/>';
+    s+='<text x="'+PXf((b2.x0+b2.x1)/2)+'" y="'+(+PYf((b2.y0+b2.y1)/2)-2)+'" text-anchor="middle" class="tk" style="font-weight:600">Building</text><text x="'+PXf((b2.x0+b2.x1)/2)+'" y="'+(+PYf((b2.y0+b2.y1)/2)+12)+'" text-anchor="middle" class="tk">+'+SU.bH+' m</text>'}
+  if(SU.useT){var t2=G.tr;s+='<circle cx="'+PXf(t2.base[0])+'" cy="'+PYf(t2.base[1])+'" r="'+(t2.R*PK).toFixed(1)+'" fill="var(--good)" opacity="0.55" stroke="var(--good)" stroke-width="2"/><circle cx="'+PXf(t2.base[0])+'" cy="'+PYf(t2.base[1])+'" r="3" fill="var(--ink)"/>';
+    s+='<text x="'+PXf(t2.base[0])+'" y="'+(+PYf(t2.base[1]-t2.R)+14)+'" text-anchor="middle" class="tk" style="font-weight:600">Tree +'+SU.tH+' m</text>'}
+  /* compass */
+  s+='<g transform="translate('+(W-34)+',36)"><circle r="20" fill="var(--panel)" stroke="var(--line)"/><path d="M0 -15 L5 2 L0 -2 L-5 2Z" fill="var(--bad)"/><text y="16" text-anchor="middle" class="tk" style="font-weight:600">N</text></g>';
+  /* sun arrow */
+  var ax=G.W/2,ay=G.rows[1].y0+G.dep/2;
+  if(day){var L=4.2,ex=ax+Math.sin(sp.A)*L,ey=ay+Math.cos(sp.A)*L;
+    s+='<defs><marker id="suar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--sunDisc)"/></marker></defs>';
+    s+='<line x1="'+PXf(ax)+'" y1="'+PYf(ay)+'" x2="'+PXf(ex)+'" y2="'+PYf(ey)+'" stroke="var(--sunDisc)" stroke-width="3" marker-end="url(#suar)"/>';
+    var sx=ax+Math.sin(sp.A)*7.6,sy=ay+Math.cos(sp.A)*7.6;sx=clamp(sx,PX0+1,PX1-1);sy=clamp(sy,PY0+1,PY1-1);
+    s+='<circle cx="'+PXf(sx)+'" cy="'+PYf(sy)+'" r="13" fill="var(--sunDisc)"/><text x="'+PXf(sx)+'" y="'+(+PYf(sy)+30)+'" text-anchor="middle" class="tk" style="font-weight:600">sun '+r0(sp.A/D2R)+'°, '+r0(sp.e/D2R)+'° up</text>';
+  }else{s+='<rect width="'+W+'" height="'+H+'" fill="#0A1520" opacity="0.55"/><text x="'+W/2+'" y="'+H/2+'" text-anchor="middle" style="fill:#fff;font-size:16px">Sun below the horizon</text>'}
+  /* scale bar */
+  s+='<g transform="translate(14,'+(H-14)+')"><line x1="0" x2="'+(5*PK)+'" stroke="var(--ink)" stroke-width="2"/><line x1="0" x2="0" y1="-4" y2="4" stroke="var(--ink)" stroke-width="2"/><line x1="'+(5*PK)+'" x2="'+(5*PK)+'" y1="-4" y2="4" stroke="var(--ink)" stroke-width="2"/><text x="'+(2.5*PK)+'" y="-6" text-anchor="middle" class="tk">5 m</text></g>';
+  return s+'</svg>';
+}
+/* ---- UI ---- */
+var suSl={};
+(function(){
+  var c=$('#suDays');
+  mkChips(c,[['80','21 Mar'],['172','21 Jun'],['266','23 Sep'],['355','21 Dec']],String(SU.doy),function(k){SU.doy=+k;suSl.d.set(SU.doy);renderSun(true)});
+  suSl.d=mkSlider($('#suDate'),{id:'suD',label:'Day of the year',min:1,max:365,step:1,value:SU.doy,fmt:doyName,onInput:function(v){SU.doy=v;setChip($('#suDays'),String(v));renderSun(true)}});
+  suSl.t=mkSlider($('#suTime'),{id:'suT0',label:'Clock time',min:T0,max:T1,step:1/12,value:SU.t,fmt:clock,onInput:function(v){SU.t=v;stopSunPlay();renderSun(false)}});
+  var b=$('#suB');
+  suSl.bH=mkSlider(b,{id:'suBH',label:'Height above our roof',min:1,max:15,step:0.5,value:SU.bH,dec:1,unit:' m',onInput:function(v){SU.bH=v;renderSun(true)}});
+  suSl.bD=mkSlider(b,{id:'suBD',label:'Gap to the array',min:0.5,max:10,step:0.5,value:SU.bD,dec:1,unit:' m',onInput:function(v){SU.bD=v;renderSun(true)}});
+  var t=$('#suT');
+  suSl.tH=mkSlider(t,{id:'suTH',label:'Tree top above our roof',min:3,max:15,step:0.5,value:SU.tH,dec:1,unit:' m',onInput:function(v){SU.tH=v;renderSun(true)}});
+  suSl.tR=mkSlider(t,{id:'suTR',label:'Crown radius',min:1,max:4,step:0.1,value:SU.tR,dec:1,unit:' m',onInput:function(v){SU.tR=v;renderSun(true)}});
+  suSl.tD=mkSlider(t,{id:'suTD',label:'Trunk distance from the array',min:1,max:10,step:0.5,value:SU.tD,dec:1,unit:' m',onInput:function(v){SU.tD=v;renderSun(true)}});
+  suSl.tau=mkSlider(t,{id:'suTau',label:'Light through the leaves',min:0,max:0.6,step:0.05,value:SU.tau,fmt:function(v){return r0(v*100)+' %'},onInput:function(v){SU.tau=v;renderSun(true)}});
+  mkChips($('#suMount'),[['fixed','Fixed tilt, facing south'],['track','Sun tracker (east → west)']],SU.mount,function(k){SU.mount=k;renderSun(true)});
+  suSl.tilt=mkSlider($('#suTilt'),{id:'suTilt0',label:'Tilt (fixed)',min:0,max:35,step:1,value:SU.tilt,unit:'°',onInput:function(v){SU.tilt=v;renderSun(true)}});
+  mkChips($('#suMit'),[['local','Basic MPPT'],['global','Global MPPT scan'],['opt','Module optimizers']],SU.mit,function(k){SU.mit=k;renderSun(false)});
+  $('#suUseB').addEventListener('change',function(e){SU.useB=e.target.checked;renderSun(true)});
+  $('#suUseT').addEventListener('change',function(e){SU.useT=e.target.checked;renderSun(true)});
+  $('#suPlay').addEventListener('click',function(){if(SU.play)stopSunPlay();else{if(SU.t>=T1-0.05)SU.t=6;SU.play=true;$('#suPlay').textContent='Pause'}});
+  $('#suNow').addEventListener('click',function(){stopSunPlay();var d=new Date(),u=d.getTime()+5.5*3600e3,ist=new Date(u),y0=Date.UTC(ist.getUTCFullYear(),0,1);
+    SU.doy=Math.min(365,Math.floor((u-y0)/864e5)+1);SU.t=clamp(ist.getUTCHours()+ist.getUTCMinutes()/60,T0,T1);suSl.d.set(SU.doy);suSl.t.set(SU.t);setChip($('#suDays'),String(SU.doy));renderSun(true)});
+})();
+function stopSunPlay(){SU.play=false;$('#suPlay').textContent='Play day'}
+function sunStep(dt){if(!SU.play)return;SU.t=Math.min(T1,SU.t+dt*0.7);suSl.t.set(SU.t);renderSun(false);if(SU.t>=T1)stopSunPlay()}
+var seasonT=null;
+function renderSun(dayChanged){
+  var D=simDay(SU.doy),M=moment(SU.doy,SU.t,true),sp=M.sp,g=M.g,P=pick(M),loss=M.clear>0?100*(1-P/M.clear):0;
+  $('#suPlan').innerHTML=planSVG(M);
+  var L1=sp.e>0.005?1/Math.tan(sp.e):0;
+  var shadedTxt=M.bm.mods.length?M.bm.mods.map(function(x){return 'S'+(x[0]+1)+'-M'+(x[1]+1)}).join(', '):'none';
+  $('#suStats').innerHTML=
+    stat('Sun now',sp.e>0.005?r0(sp.A/D2R)+'° / '+r0(sp.e/D2R)+'°':'below horizon','azimuth / elevation')+
+    stat('Light on modules',r0(g.g)+' W/m²',sp.e>0.005?'direct '+r0(g.beam)+' · diffuse '+r0(g.diff):'night')+
+    stat('Shadow length',sp.e>0.005?f1(L1*SU.bH)+' m':'–','building +'+SU.bH+' m ('+f2(L1)+' m per m)')+
+    stat('Modules shaded',M.bm.mods.length,M.bm.mods.length?(M.bm.nb?M.bm.nb+' by building ':'')+(M.bm.nt?M.bm.nt+' by tree':''):'none',M.bm.mods.length?'warn':'')+
+    stat('Power now',f2(P/1000)+' kW','clear '+f2(M.clear/1000)+' kW · loss '+f1(Math.max(0,loss))+' %',loss>3?'bad':'')+
+    stat('Energy today',f1(SU.mit==='local'?D.El:SU.mit==='opt'?D.Eo:D.Eg)+' kWh','clear '+f1(D.Ec)+' kWh');
+  /* day chart */
+  var pts=D.pts,pm=Math.ceil(Math.max(1000,Math.max.apply(null,pts.map(function(p){return p.clear})))*1.1/1000)*1000;
+  var vl=[{x:SU.t,cls:'cur',label:clock(SU.t)}];
+  chart($('#suDayChart'),{id:'sud',xmin:T0,xmax:T1,xt:7,ymax:pm,xlabel:'Clock time IST (h)',ylabel:'DC power (W)',ylc:'p',aria:'Array power over the day with and without shade',
+    series:[{pts:pts.map(function(p){return [p.h,p.clear]}),cls:'gh'},{pts:pts.map(function(p){return [p.h,p.loc]}),cls:'bad thin'},{pts:pts.map(function(p){return [p.h,pick(p)]}),cls:'pow'}],
+    vlines:vl,marks:[{x:SU.t,y:P,cls:'pow',label:f2(P/1000)+' kW'}]});
+  chart($('#suIrrChart'),{id:'sui',xmin:T0,xmax:T1,xt:7,ymax:1100,y2:{max:90,label:'Elevation (°)',c:'c'},xlabel:'Clock time IST (h)',ylabel:'W/m²',ylc:'p',aria:'Light on the modules and sun elevation over the day',h:220,
+    series:[{pts:pts.map(function(p){return [p.h,p.g.g]}),cls:'pow'},{pts:pts.map(function(p){return [p.h,Math.max(0,p.sp.e/D2R)]}),cls:'cur',ax:'y2'}],vlines:[{x:SU.t,cls:'cur'}]});
+  /* windows */
+  function wtxt(w,who,where){if(!w.length)return '<p><b>'+who+':</b> no shadow on the array on this day.</p>';
+    return w.map(function(x){return '<p><b>'+who+'</b> ('+where+'): <span class="pill warn">'+clock(x.a)+' – '+clock(x.b+DT_DAY)+'</span><br>about '+f1(x.b+DT_DAY-x.a)+' h, up to '+x.max+' module'+(x.max>1?'s':'')+' at '+clock(x.at)+', energy lost '+f2(x.loss)+' kWh</p>'}).join('')}
+  $('#suWin').innerHTML=(SU.useB?wtxt(D.wins.b,'Building','morning, east'):'<p>Building switched off.</p>')+(SU.useT?wtxt(D.wins.t,'Tree','evening, west'):'<p>Tree switched off.</p>')+
+    '<p class="note">Times are read from the simulation in 10-minute steps for '+doyName(SU.doy)+'. They move every day because the sun path changes.</p>';
+  function row(n,e,b){var l=D.Ec>0?100*(1-e/D.Ec):0;return '<tr'+(b?' style="font-weight:600"':'')+'><td>'+n+'</td><td class="num">'+f1(e)+' kWh</td><td class="num">'+(l>0.05?'−'+f1(l)+' %':'–')+'</td></tr>'}
+  $('#suEnergy').innerHTML='<tr><th>Case</th><th>Energy</th><th>Loss</th></tr>'+row('No building, no tree',D.Ec)+row('With shade, basic MPPT',D.El,SU.mit==='local')+row('With shade, global MPPT scan',D.Eg,SU.mit==='global')+row('With shade, module optimizers',D.Eo,SU.mit==='opt')+
+    '<tr><td colspan="3" class="note">Optimizers recover '+f2(D.Eo-D.El)+' kWh over basic MPPT on this day; a global scan recovers '+f2(D.Eg-D.El)+' kWh at no hardware cost.</td></tr>';
+  /* how it is calculated */
+  var n=SU.doy,how='';
+  how+='<li><b>Where is the sun?</b> Day '+n+' ('+doyName(n)+'), '+clock(SU.t)+' IST at '+SITE.lat+'° N, '+SITE.lon+'° E.<br>Declination δ = 23.45°·sin(360°·(284 + n)/365) = <b>'+f1(sp.dec/D2R)+'°</b>. Solar time = IST + 4·('+SITE.lon+' − 82.5) min + EoT ('+f1(sp.eot)+' min) = <b>'+clock(((sp.st%24)+24)%24)+'</b> (solar noon at '+clock(12-sp.corr/60)+' IST).<br>Hour angle ω = 15°·(solar time − 12) = <b>'+f1(sp.w/D2R)+'°</b>. sin e = sin φ·sin δ + cos φ·cos δ·cos ω → elevation e = <b>'+f1(sp.e/D2R)+'°</b>, azimuth A = <b>'+f1(sp.A/D2R)+'°</b> from north.</li>';
+  how+=sp.e>0.005?'<li><b>How long is the shadow?</b> An object H metres taller than our roof throws a shadow L = H / tan e = H × '+f2(L1)+' m, pointing to '+r0(((sp.A/D2R+180)%360))+'° (away from the sun). Building +'+SU.bH+' m → <b>'+f1(SU.bH*L1)+' m</b>; tree top +'+SU.tH+' m → <b>'+f1(SU.tH*L1)+' m</b>. Low sun = long shadow: that is why the shadows cover the array in the early morning and late evening, and grow in winter.</li>':'<li><b>Shadow:</b> the sun is below the horizon.</li>';
+  how+='<li><b>Which cells go dark?</b> Each module is split into its 3 bypass-diode sections and 8 points per section. From every point a ray is traced toward the sun. If it hits the building box the point loses all direct sun; if it passes through the tree crown (a sphere of radius '+SU.tR+' m) it keeps '+r0(SU.tau*100)+' %. The share of dark points is the shade on that section. Right now: '+shadedTxt+'.</li>';
+  how+=g.g>3?'<li><b>How much light?</b> Clear-sky air mass AM = '+f2(g.am)+', direct beam DNI = 0.85 (haze) × 1353·0.7^(AM^0.678) = <b>'+r0(g.dni)+' W/m²</b>. Angle to the module surface: cos θ = '+f2(g.ct)+' ('+(SU.mount==='track'?'tracker turned '+r0(g.S.rho/D2R)+'°':'tilt '+SU.tilt+'° south')+'). Light on the module = '+r0(g.beam)+' direct + '+r0(g.diff)+' diffuse = <b>'+r0(g.g)+' W/m²</b>. A section in full shade keeps only the diffuse part ('+r0(100*g.diff/g.g)+' %).</li>':'';
+  how+=M.clear>0?'<li><b>What does it do electrically?</b> The weak sections cannot carry the string current, so their bypass diodes conduct or the whole string is held back. The P–V curve gets '+(M.c?M.c.peaks:1)+' peak'+((M.c&&M.c.peaks>1)?'s':'')+'. Clear sky: '+f2(M.clear/1000)+' kW. With shade: '+f2(M.glob/1000)+' kW with a global scan, '+f2(M.loc/1000)+' kW if the tracker stays on the nearest peak, '+f2(M.opt/1000)+' kW with module optimizers.</li>':'';
+  how+='<li><b>Over the day</b> the same steps run every 10 minutes from 05:30 to 19:30 and the power is added up: '+f1(D.Ec)+' kWh without obstacles, '+f1(D.Eg)+' kWh with them ('+f1(100*(1-D.Eg/D.Ec))+' % lost).</li>';
+  $('#suHow').innerHTML=how;
+  var wb=D.wins.b[0],wt=D.wins.t[0];
+  $('#suFix').innerHTML='<p><b>1. See it in the data.</b> Log each string current every minute and compare S1, S2 and S3. Shade from a fixed object shows up as a dip in one string at the same clock time every day'+(wb?' (here S1 around '+clock(wb.a)+'–'+clock(wb.b+DT_DAY)+')':'')+(wt?' and S3 around '+clock(wt.a)+'–'+clock(wt.b+DT_DAY):'')+', moving a few minutes each week. Dust lowers all strings together; a fault does not follow the clock.</p>'+
+    '<p><b>2. Compare with expected power.</b> A pyranometer and module temperature sensor give the expected power from the 565 W rating (IEC 61724-1). Expected minus measured, plotted as time of day × day of year, draws a map of the shading loss.</p>'+
+    '<p><b>3. Confirm.</b> An I–V trace taken during the shaded hour shows the step and the second peak (IEC 62446-1); an IR image shows the shaded cells (IEC TS 62446-3).</p>'+
+    '<p><b>4. Reduce the loss.</b> Turn on the inverter\'s global MPPT scan (free, recovers '+f2(D.Eg-D.El)+' kWh today). Fit optimizers only on the modules that get shade (total with optimizers '+f1(D.Eo)+' kWh). Wire the modules that share a shadow into the same string on a separate MPPT input. Trim the tree, or leave a gap of about 2–3 × the obstacle height for winter mornings. Re-check every season.</p>';
+  if(dayChanged){clearTimeout(seasonT);seasonT=setTimeout(seasonTable,60)}
+}
+var seasonKey='';
+function seasonTable(){
+  var key=SU.dayKey.split('|').slice(1).join('|');if(key===seasonKey)return;seasonKey=key;
+  var keep={day:SU.day,key:SU.dayKey},rows=[[80,'21 Mar'],[172,'21 Jun'],[266,'23 Sep'],[355,'21 Dec']].map(function(d){SU.day=null;var D=simDay(d[0]);
+    return '<tr><td>'+d[1]+'</td><td class="num">'+f1(D.Ec)+'</td><td class="num">'+f1(D.Eg)+'</td><td class="num">−'+f1(100*(1-D.Eg/D.Ec))+' %</td><td class="num">'+(D.wins.b.length?clock(D.wins.b[0].a)+'–'+clock(D.wins.b[0].b+DT_DAY):'–')+'</td><td class="num">'+(D.wins.t.length?clock(D.wins.t[0].a)+'–'+clock(D.wins.t[D.wins.t.length-1].b+DT_DAY):'–')+'</td></tr>'});
+  SU.day=keep.day;SU.dayKey=keep.key;
+  $('#suSeason').innerHTML='<tr><th>Day</th><th>Clear kWh</th><th>Shaded kWh</th><th>Loss</th><th>Building</th><th>Tree</th></tr>'+rows.join('');
+}
+
+/* ================= CODE VIEW ================= */
+var CD={k:'subV',G:1000,Ta:30};
+var CODE=[
+  ['subMake','Module section','Builds one bypass-diode section (48 half-cells): corrects Isc for irradiance on front and rear and for temperature, and Voc for temperature and light level.',function(){return subMake}],
+  ['subV','Section voltage','Voltage of one section at a given current: the explicit one-diode equation V = C2·Voc·ln(1 + (1 − I/Isc)/C1). If the current is more than the section can make, its bypass diode clamps it at −0.45 V (or a failed diode shorts / opens).',function(){return subV}],
+  ['strV','String voltage','Adds up all sections of all modules in a string, minus the voltage drop on cables and connectors.',function(){return strV}],
+  ['strI','String current','Solves the string current at a given voltage by bisection (34 halvings), because the voltage equation cannot be inverted by hand once diodes switch.',function(){return strI}],
+  ['arrCurve','Array I–V curve','Sweeps the array voltage from 0 to Voc, adds the string currents, finds the maximum power point and counts the peaks on the P–V curve (more than one = partial shading).',function(){return arrCurve}],
+  ['hotspot','Hot-spot cell','Reverse voltage and heat in a shaded, low-shunt cell, then its temperature with a first-order thermal model (time constant from wind).',function(){return hotspot}],
+  ['sunPos','Sun position','Declination, equation of time and hour angle for Gandhinagar, then sun elevation and azimuth for any date and IST clock time.',function(){return sunPos}],
+  ['poa','Light on the module','Clear-sky direct beam from air mass, plus diffuse and ground light, projected on the tilted (or tracking) module.',function(){return poa}],
+  ['blockMap','Shadow on the cells','Traces a ray from 24 points on every module toward the sun and checks if it hits the building box or the tree crown.',function(){return blockMap}]
+];
+(function(){
+  mkChips($('#cdPick'),CODE.map(function(c){return [c[0],c[1]]}),CD.k,function(k){CD.k=k;renderCode()});
+  mkSlider($('#cdRunCtl'),{id:'cdG',label:'Irradiance',min:100,max:1100,step:10,value:CD.G,unit:' W/m²',onInput:function(v){CD.G=v}});
+  mkSlider($('#cdRunCtl'),{id:'cdTa',label:'Air temperature',min:5,max:48,step:1,value:CD.Ta,unit:' °C',onInput:function(v){CD.Ta=v}});
+  $('#cdRun').addEventListener('click',runCode);
+})();
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function pretty(src){
+  var out='',ind=0,i,ch,inS=null;
+  for(i=0;i<src.length;i++){ch=src[i];
+    if(inS){out+=ch;if(ch===inS&&src[i-1]!=='\\')inS=null;continue}
+    if(ch==="'"||ch==='"'){inS=ch;out+=ch;continue}
+    if(ch==='{'){ind++;out+='{\n'+'  '.repeat(ind);continue}
+    if(ch==='}'){ind=Math.max(0,ind-1);out=out.replace(/[ ]+$/,'');out+='\n'+'  '.repeat(ind)+'}';continue}
+    if(ch===';'&&src.slice(i-4,i)!=='for('&&!/for\([^)]*$/.test(src.slice(Math.max(0,i-60),i))){out+=';\n'+'  '.repeat(ind);continue}
+    if(ch==='\n'){continue}
+    out+=ch}
+  return out.replace(/\n\s*\n/g,'\n').replace(/\n\s*;/g,';');
+}
+function renderCode(){
+  var c=CODE.filter(function(x){return x[0]===CD.k})[0];
+  $('#cdTitle').textContent='Source code: '+c[0]+'()';$('#cdWhat').textContent=c[2];
+  $('#cdSrc').innerHTML=esc(pretty(c[3]().toString()));
+  var st=['Sliders and buttons','Scenario (shade, faults, sun)','Module sections<br><code>subMake · subV</code>','Strings<br><code>strV · strI</code>','Array curve + MPP<br><code>arrCurve</code>','Drawings and charts<br><code>SVG</code>'];
+  $('#cdFlow').innerHTML='<div class="flowrow">'+st.map(function(x,i){return '<div class="fbox">'+x+'</div>'+(i<st.length-1?'<span class="farr" aria-hidden="true">→</span>':'')}).join('')+'</div>'+
+    '<p class="note">Every slider change runs this chain again, usually in a few milliseconds. The Sun &amp; shadow tab adds <code>sunPos → poa → blockMap</code> in front of it and repeats it every 10 minutes of the day.</p>';
+}
+function runCode(){
+  var t0=performance.now();
+  var A=makeA([single(1,CD.G,CD.Ta,0.25)],CD.G,CD.Ta,tCell(CD.Ta,CD.G)),c=arrCurve(A,200),ms=performance.now()-t0;
+  var lines=['> var A = makeA([single(1, '+CD.G+', '+CD.Ta+', 0.25)])   // one 565 W module, roof albedo 0.25',
+    '> var c = arrCurve(A, 200)                         // 200-point I–V sweep','',
+    'cell temperature : '+f1(tCell(CD.Ta,CD.G))+' °C',
+    'Voc              : '+f2(c.voc)+' V',
+    'Isc              : '+f2(c.isc)+' A',
+    'Pmax             : '+f1(c.best.p)+' W   at '+f2(c.best.v)+' V × '+f2(c.best.i)+' A',
+    'R at max power   : '+f2(c.best.v/c.best.i)+' Ω   (set the rheostat / e-load here)',
+    'fill factor      : '+f1(c.ff*100)+' %',
+    'computed in      : '+f1(ms)+' ms'];
+  $('#cdOut').textContent=lines.join('\n');
+}
+
+var TABS=['plant','curves','shading','sun','hotspot','faults','mppt','bench','life','code','standards'],active='plant',booted={};
+function show(tab){
+  if(TABS.indexOf(tab)<0)tab='plant';
+  active=tab;
+  TABS.forEach(function(t){$('#tab-'+t).hidden=t!==tab;$('#t-'+t).setAttribute('aria-selected',t===tab?'true':'false')});
+  if(tab!=='plant')stopDemo();
+  if(tab==='plant')renderPlant();
+  if(tab==='curves')renderCurves();
+  if(tab==='shading')renderShading();
+  if(tab==='sun')renderSun(true);
+  if(tab==='hotspot')renderHot();
+  if(tab==='faults')renderFaults();
+  if(tab==='mppt'){if(!booted.mppt){booted.mppt=true;mReset();for(var k=0;k<60;k++)tick();if(REDUCE){M.run=false;$('#mRun').textContent='Resume'}}renderMppt()}
+  if(tab==='bench')renderBench();
+  if(tab==='life')renderLife();
+  if(tab==='code'){renderCode();runCode()}
+}
+$$('.tabs button').forEach(function(b){b.addEventListener('click',function(){try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){location.hash=b.dataset.tab}show(b.dataset.tab)})});
+window.addEventListener('hashchange',function(){show(location.hash.slice(1))});
+var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){show(active)},150)});
+setInterval(function(){if(active!=='mppt'||!M.run||document.hidden)return;tick();renderMppt()},DT*1000);
+var lastT=performance.now(),acc=0;
+function loop(now){
+  var dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
+  if(!document.hidden){
+    if(active==='plant')flowStep(PLF,dt);
+    if(active==='bench'){flowStep(BF,dt);acc+=dt;if(acc>0.08){benchStep(acc);acc=0}}
+    if(active==='hotspot'){acc+=dt;if(acc>0.1){hsStep(acc);acc=0}}
+    if(active==='sun'){acc+=dt;if(acc>0.12){sunStep(acc);acc=0}}
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+show(location.hash.slice(1)||'plant');
+})();
+</script>
+
+</body></html>
