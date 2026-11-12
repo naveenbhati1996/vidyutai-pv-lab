@@ -1,21 +1,22 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>VidyutAI Solar PV Lab</title>
+<title>Solar PV Lab · SPEL, IIT Gandhinagar</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* Layout: instrument-panel feel kept from the first PV Lab. Title strip, tab switch, then controls beside live drawings and plots (stacks on phones). */
 :root{
-  --bg:#F1F5F8; --panel:#FFFFFF; --ink:#0F2230; --muted:#587080; --line:#D3DDE5; --grid:#E4EBF0;
-  --sun:#B96A00; --sunSoft:#FBEBD0; --cur:#0C7C87; --bad:#C23B3D; --good:#2A7B4C; --warn:#A86A00;
+  --bg:#F3F6FA; --panel:#FFFFFF; --ink:#0B1F33; --muted:#566B80; --line:#DCE3EB; --grid:#E8EDF3;
+  --sun:#C27400; --sunSoft:#FFF3DC; --cur:#0B7A8C; --bad:#C2363C; --good:#1F7A4D; --warn:#A86A00;
+  --navy:#0B2545; --navy2:#13396B; --accent:#E8A317; --shadow:0 1px 2px rgba(11,31,51,.06),0 6px 18px rgba(11,31,51,.06);
   --s1:#2F6FB0; --s2:#8A4FB8; --s3:#2A8C6B;
   --sky:#DCEBF5; --sky2:#EEF5FA; --roof:#D9CBB4; --roofLine:#C4B396; --frame:#9AA9B5; --cell:#1D3B5E; --cellLine:#34587F;
   --shade:#1A1A1A; --cable:#4A5865; --sunDisc:#F2B33D; --cloud:#FFFFFF; --boxFill:#F6F8FA; --boxLine:#8A9AA8;
-  --f-display:'Space Grotesk','Segoe UI',system-ui,sans-serif;
-  --f-body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
-  --f-data:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --f-display:'Manrope','Segoe UI',system-ui,sans-serif;
+  --f-body:'Inter','Segoe UI',system-ui,sans-serif;
+  --f-data:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -23,7 +24,7 @@
     --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
     --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
     --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
-    --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; color-scheme:dark;
+    --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; --navy:#0B2545; --navy2:#16416F; --accent:#E8A317; --shadow:none; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
@@ -31,28 +32,45 @@
   --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
   --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
   --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
-  --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; color-scheme:dark;
+  --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; --navy:#0B2545; --navy2:#16416F; --accent:#E8A317; --shadow:none; color-scheme:dark;
 }
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 *{box-sizing:border-box}
-.wrap{max-width:1120px;margin:0 auto}
+.wrap{max-width:1160px;margin:0 auto}
 h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
-h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
-h2{font-size:17px;font-weight:600}
-h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.lede{color:var(--muted);margin:6px 0 0;max-width:70ch}
-.spec{font-family:var(--f-data);font-size:12px;color:var(--muted);margin-top:10px}
-.credit{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);display:grid;gap:2px}
-.credit b{color:var(--ink);font-weight:600}
-.credit .proj{font:600 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--sun)}
-.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:4px;margin:18px 0;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
-.tabs button{min-width:0;padding:9px 6px;border:0;border-radius:7px;background:transparent;color:var(--muted);font:500 14px var(--f-body);cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+h1{font-size:clamp(30px,4.2vw,44px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:18px;font-weight:700}
+h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.brandbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--line)}
+.brandbar .logo{display:flex;align-items:center;gap:14px;min-width:0}
+.brandbar img{height:88px;width:auto;display:block;border-radius:6px;background:#fff}
+.brandbar .fallback{display:none;font:800 18px var(--f-display);color:var(--navy)}
+.brandbar .inst{text-align:right;line-height:1.3}
+.brandbar .inst b{display:block;font:800 16px var(--f-display);color:var(--ink);letter-spacing:-.01em}
+.brandbar .inst span{font-size:13px;color:var(--muted)}
+.hero{margin-top:18px;border-radius:16px;padding:clamp(20px,3.4vw,36px);color:#fff;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 62%,#1C5A8C 100%);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(232,163,23,.35),rgba(232,163,23,0) 70%)}
+.hero .eyebrow{font:700 12px var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.hero h1{margin-top:6px;color:#fff}
+.lede{margin:14px 0 0;max-width:78ch;font-size:clamp(17px,1.7vw,20px);line-height:1.6;text-align:justify;hyphens:auto;color:#EAF1F8;position:relative;z-index:1}
+.lede strong{color:#fff;font-weight:700;background:linear-gradient(transparent 62%,rgba(232,163,23,.45) 62%)}
+.specgrid{margin-top:20px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));position:relative;z-index:1}
+.specgrid div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 12px}
+.specgrid span{display:block;font-size:12px;color:#B9CCE0;letter-spacing:.02em}
+.specgrid b{display:block;font:700 18px var(--f-display);color:#fff;margin-top:2px}
+.specgrid small{display:block;font-size:12px;color:#D9E4EF}
+.spec{margin-top:16px;font-size:15px;line-height:1.6;text-align:justify;color:#EAF1F8;border-left:4px solid var(--accent);padding:8px 0 8px 14px;position:relative;z-index:1}
+.spec b{color:#fff}
+@media (max-width:640px){.brandbar img{height:64px}.brandbar .inst{text-align:left}.lede,.spec{text-align:left}}
+.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:4px;margin:20px 0;padding:5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);position:sticky;top:8px;z-index:20}
+.tabs button{min-width:0;padding:10px 6px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:600 14px var(--f-body);cursor:pointer;transition:background .15s,color .15s}
+.tabs button:hover{color:var(--ink);background:var(--bg)}
+.tabs button[aria-selected="true"]{background:var(--navy);color:#fff}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 .grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
 @media (min-width:880px){.grid{grid-template-columns:minmax(0,300px) minmax(0,1fr);align-items:start}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0;box-shadow:var(--shadow)}
 .controls{display:flex;flex-direction:column;gap:13px}
 .viz{display:flex;flex-direction:column;gap:14px;min-width:0}
 .sl{display:block}
@@ -68,7 +86,7 @@ select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px
 .chip[aria-pressed="true"]{background:var(--sun);border-color:var(--sun);color:var(--panel)}
 .btns{display:flex;flex-wrap:wrap;gap:6px}
 .btn{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:500 13px var(--f-body);cursor:pointer}
-.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
 .btn[aria-pressed="true"]{background:var(--sunSoft);border-color:var(--sun)}
 .toggle{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
 .toggle input{width:18px;height:18px;accent-color:var(--sun);margin:0}
@@ -97,12 +115,14 @@ svg text{font-family:var(--f-data);font-size:11px}
 .sc.bad{fill:var(--bad)} .sc.cur{fill:var(--cur)}
 .mklbl{fill:var(--ink);font-size:11px}
 .stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(122px,1fr))}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-width:0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;box-shadow:var(--shadow);border-top:3px solid var(--navy2)}
 .stat span{display:block;font-size:12px;color:var(--muted)}
 .stat b{font:500 19px var(--f-data);font-variant-numeric:tabular-nums}
 .stat small{display:block;font:400 11px var(--f-data);color:var(--muted)}
 .stat.bad b{color:var(--bad)} .stat.good b{color:var(--good)} .stat.warn b{color:var(--warn)}
-.diag p{margin:6px 0 0}
+.diag p{margin:6px 0 0;font-size:15px;line-height:1.6}
+.diag p b{font-family:var(--f-display)}
+.footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .diag .field{color:var(--muted);font-size:13px}
 .note{font-size:12px;color:var(--muted);margin:2px 0 0}
 .scene-wrap{position:relative}
@@ -146,15 +166,22 @@ pre.code{margin:6px 0 0;padding:12px;background:#0F2230;color:#D7E6F0;border-rad
 
 </head><body>
 <div class="wrap">
-  <header>
+  <div class="brandbar">
+    <div class="logo"><img src="https://labs.iitgn.ac.in/spel/assets/images/logo-iitgn-spel.jpg-958x390.jpg" alt="Smart Power Electronics Laboratory (SPEL) and Indian Institute of Technology Gandhinagar logos" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="fallback">SPEL · IIT Gandhinagar</span></div>
+    <div class="inst"><b>Smart Power Electronics Laboratory</b><span>IIT Gandhinagar</span></div>
+  </div>
+  <header class="hero">
+    <div class="eyebrow">Interactive solar PV laboratory</div>
     <h1>Solar PV Lab</h1>
-    <p class="lede">A 10 kW rooftop bifacial PV plant you can run: watch current flow from the modules to the grid, then add shading, faults and hot spots and see what they do to the curves, the temperatures and the maximum power point tracker.</p>
-    <div class="spec" id="spec">Plant: 18 × 565 W bifacial TOPCon modules (144 half-cells, 3 bypass diodes) in 3 strings of 6 → about 10.2 kWp. Module: Voc 50 V, Isc 14 A, Vmp 42 V, Imp 13.2 A (45–46 V at light load).</div>
-    <div class="credit">
-      <span class="proj">Project: VidyutAI</span>
-      <span>Prepared by <b>Mr. Naveen Bhati</b>, Department of Electrical Engineering, IIT Gandhinagar</span>
-      <span>PI: <b>Prof. Pallavi Bhardwaj</b></span>
+    <p class="lede">A <strong>10 kW rooftop bifacial PV plant</strong> you can run: watch <strong>current flow</strong> from the modules to the grid, then add <strong>shading, faults and hot spots</strong> and see what they do to the <strong>I–V and P–V curves</strong>, the <strong>temperatures</strong> and the <strong>maximum power point tracker</strong>.</p>
+    <div class="specgrid">
+      <div><span>Plant</span><b>10.2 kWp</b><small>3 strings × 6 modules</small></div>
+      <div><span>Module</span><b>565 W bifacial</b><small>TOPCon · 144 half-cells</small></div>
+      <div><span>Voc / Isc</span><b>50 V / 14 A</b><small>at STC</small></div>
+      <div><span>Vmp / Imp</span><b>42 V / 13.2 A</b><small>at STC</small></div>
+      <div><span>Light load</span><b>45–46 V</b><small>measured</small></div>
     </div>
+    <p class="spec" id="spec"><b>Plant:</b> 18 × 565 W bifacial TOPCon modules (144 half-cells, 3 bypass diodes) in 3 strings of 6 → about <b>10.2 kWp</b>. <b>Module:</b> Voc 50 V, Isc 14 A, Vmp 42 V, Imp 13.2 A (45–46 V at light load).</p>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Lab sections">
@@ -416,21 +443,25 @@ pre.code{margin:6px 0 0;padding:12px;background:#0F2230;color:#D7E6F0;border-rad
     <div class="grid">
       <div class="card controls">
         <h2>Inverter MPPT</h2>
+        <button class="btn primary" id="mDemo" type="button">▶ Play shading demo</button>
+        <h3>Conditions</h3>
+        <div class="chips" id="mCond" role="group" aria-label="Conditions"></div>
+        <h3>Algorithm</h3>
         <div class="chips" id="algoChips" role="group" aria-label="Algorithm"></div>
         <div id="mpptCtl"></div>
-        <label class="toggle"><input type="checkbox" id="mShade"> Chimney shadow on string 1 (two power peaks)</label>
+        <label class="toggle"><input type="checkbox" id="mShade"> Shadow on 4 modules (two power peaks)</label>
         <div class="btns">
-          <button class="btn primary" id="mRun">Pause</button>
-          <button class="btn" id="mCloud">Cloud passes</button>
-          <button class="btn" id="mScan">Global scan now</button>
-          <button class="btn" id="mReset">Restart</button>
+          <button class="btn" id="mRun" type="button">Pause</button>
+          <button class="btn" id="mCloud" type="button">Cloud passes</button>
+          <button class="btn" id="mScan" type="button">Global scan now</button>
+          <button class="btn" id="mReset" type="button">Restart</button>
         </div>
       </div>
       <div class="viz">
         <div class="stats" id="mpptStats"></div>
         <div class="card">
           <h3>Array power against voltage</h3>
-          <div class="legend"><span><i class="pow"></i>Array P–V</span><span>Filled dot: tracker now</span><span>Ring: true maximum</span></div>
+          <div class="legend"><span><i class="gh"></i>STC P–V (1000 W/m², 25 °C)</span><span><i class="pow"></i>P–V now</span><span><i class="cur"></i>Tracker path</span><span>Ring: maximum power point · red: local peak · dot: tracker</span></div>
           <div id="mpptChart1"></div>
         </div>
         <div class="card">
@@ -577,6 +608,7 @@ pre.code{margin:6px 0 0;padding:12px;background:#0F2230;color:#D7E6F0;border-rad
   </section>
 
   <p class="note" style="margin-top:18px">Model: one-diode style curves for a 144 half-cell bifacial module with three bypass-diode substrings, combined into strings and an array. Built for teaching, not for system sizing.</p>
+  <footer class="footer"><span>Smart Power Electronics Laboratory (SPEL) · IIT Gandhinagar</span><span>Model based on IEC 61215, IEC 60904, IEC TS 62446-3, IEC 62548, EN 50530</span></footer>
 </div>
 
 <script>
@@ -1220,67 +1252,114 @@ function renderFaults(){
 }
 
 /* ================= MPPT ================= */
-var M={algo:'po',G:850,Ta:32,step:3,shade:false,run:true,cloudUntil:0,V:0,prevV:0,prevP:0,prevI:0,dir:-1,first:true,hist:[],trail:[],key:'',c:null,A:null,n:0};
-var DT=0.08,NH=220;
+var M={algo:'vpo',cond:'stc',G:850,Ta:32,step:3,shade:false,run:true,cloudUntil:0,V:0,prevV:0,prevP:0,prevI:0,dir:-1,first:true,hist:[],trail:[],key:'',c:null,A:null,n:0,scan:null,stc:null,locked:false,lastScan:null,demo:0,demoMsg:''};
+var DT=0.08,NH=220,TA_STC=25-(MOD.nmot-20)/800*1000;
+/* Standard Test Conditions: 1000 W/m² on the front, cell at 25 °C, AM1.5, no rear light (IEC 60904-3) */
+function stcCurve(){if(!M.stc)M.stc=arrCurve(build(scenario({G:1000,Ta:TA_STC,alb:0})),300);return M.stc}
+function mCond(){
+  var cloud=performance.now()<M.cloudUntil,f=cloud?0.3:1;
+  return M.cond==='stc'?{G:1000*f,Ta:TA_STC,alb:0,cloud:cloud,T:25}:{G:M.G*f,Ta:M.Ta,alb:0.25,cloud:cloud,T:tCell(M.Ta,M.G*f)};
+}
+M.pat=[[0,0],[0,1],[1,0],[1,1]];M.shf=0.8;
+function shadeMppt(S){M.pat.forEach(function(q){S.sh[q[0]][q[1]]=[M.shf,M.shf,M.shf]})}
 function mpptCurve(){
-  var cloud=performance.now()<M.cloudUntil,G=M.G*(cloud?0.3:1),key=r0(G)+'|'+M.Ta+'|'+M.shade;
-  if(key!==M.key){var S=scenario({G:G,Ta:M.Ta});if(M.shade){[0,1].forEach(function(m){S.sh[0][m]=[0.8,0.8,0.8]})}
-    M.A=build(S);M.c=arrCurve(M.A,220);M.key=key}
+  var k=mCond(),key=[r0(k.G),k.Ta,k.alb,M.shade].join('|');
+  if(key!==M.key){var S=scenario({G:k.G,Ta:k.Ta,alb:k.alb});if(M.shade)shadeMppt(S);M.A=build(S);M.c=arrCurve(M.A,300);M.key=key;M.locked=false}
   return M.c;
 }
-function mReset(){var c=mpptCurve();M.V=c.voc*0.92;M.prevV=M.V;M.prevP=0;M.prevI=0;M.dir=-1;M.first=true;M.hist=[];M.trail=[];M.n=0}
-function gScan(){var c=mpptCurve();M.V=c.best.v;M.first=true}
+function mReset(){var c=mpptCurve();M.V=c.voc*0.92;M.prevV=M.V;M.prevP=0;M.prevI=0;M.dir=-1;M.first=true;M.hist=[];M.trail=[];M.n=0;M.scan=null;M.locked=false;M.lastScan=null}
+function startScan(){var c=mpptCurve();M.scan={v:c.voc*0.97,dv:c.voc/55,best:{p:0,v:M.V},from:{v:M.V,p:M.V*Math.max(0,arrI(M.A,M.V))}};M.locked=false}
 function tick(){
   var c=mpptCurve(),V=M.V,I=Math.max(0,arrI(M.A,V)),P=V*I;
   M.hist.push({p:P,pm:c.best.p});if(M.hist.length>NH)M.hist.shift();
-  M.trail.push([V,P]);if(M.trail.length>30)M.trail.shift();
-  M.n++;var nv=V;
-  if(M.algo==='scan'&&M.n%75===0){gScan();return}
-  if(M.algo==='fix'){nv=0.76*c.voc}
-  else if(M.first){nv=V+M.dir*M.step}
-  else if(M.algo==='po'||M.algo==='scan'){if(P-M.prevP<0)M.dir=-M.dir;nv=V+M.dir*M.step}
-  else{var dV=V-M.prevV,dI=I-M.prevI;
-    if(Math.abs(dV)<1e-9){nv=V+(Math.abs(dI)<1e-6?0:(dI>0?1:-1)*M.step)}
-    else{var err=dI/dV+I/Math.max(V,1);if(Math.abs(err)<0.002)nv=V;else nv=err>0?V+M.step:V-M.step}}
+  M.trail.push([V,P,M.scan?1:0]);if(M.trail.length>90)M.trail.shift();
+  M.n++;
+  if(M.scan){var s=M.scan;if(P>s.best.p)s.best={p:P,v:V};s.v-=s.dv;
+    if(s.v<c.voc*0.2){M.V=s.best.v;M.lastScan={best:s.best,from:s.from};M.scan=null;M.first=true;M.prevP=0}else M.V=s.v;return}
+  if(M.algo==='scan'&&M.n%140===0){startScan();return}
+  var nv=V,dV=V-M.prevV,dP=P-M.prevP,dI=I-M.prevI;
+  if(M.first){nv=V+M.dir*M.step}
+  else if(M.algo==='po'){if(dP<0)M.dir=-M.dir;nv=V+M.dir*M.step}
+  else if(M.algo==='vpo'||M.algo==='scan'){
+    /* variable-step P&O: the step shrinks with the slope dP/dV, so it settles on the maximum instead of hopping across it */
+    if(dP<0)M.dir=-M.dir;
+    var slope=Math.abs(dV)>1e-9?Math.abs(dP/dV):0,st=clamp(0.09*slope,0.08,M.step);
+    M.locked=st<=0.08+1e-9&&Math.abs(dP)<P*0.0004;
+    nv=M.locked?V:V+M.dir*st;
+    if(M.locked&&M.n%25===0)nv=V+M.dir*0.08;   /* small probe so it notices when conditions change */
+  }else{ /* incremental conductance: dI/dV = −I/V at the maximum */
+    var err=Math.abs(dV)<1e-9?0:dI/dV+I/Math.max(V,1);
+    if(Math.abs(dV)<1e-9){nv=Math.abs(dI)<1e-4?V:V+(dI>0?1:-1)*M.step}
+    else{var st2=clamp(12*Math.abs(err),0.08,M.step);M.locked=Math.abs(err)<0.004;nv=M.locked?V:V+(err>0?st2:-st2)}
+    if(M.locked&&M.n%25===0)nv=V-0.08;
+  }
   M.prevV=V;M.prevP=P;M.prevI=I;M.first=false;
   M.V=clamp(nv,5,c.voc*0.995);
 }
+function nearestPeak(c,V){var pk=c.peakList.length?c.peakList:[c.best],b=pk[0];pk.forEach(function(p){if(Math.abs(p.v-V)<Math.abs(b.v-V))b=p});return b}
 function renderMppt(){
-  var c=mpptCurve(),n=M.hist.length,last=M.hist.slice(-100);
+  var c=mpptCurve(),stc=stcCurve(),k=mCond(),n=M.hist.length,last=M.hist.slice(-60);
   var eff=0,cnt=0;last.forEach(function(x){if(x.pm>0){eff+=x.p/x.pm;cnt++}});eff=cnt?100*eff/cnt:0;
-  var cur=M.hist[n-1]||{p:0,pm:c.best.p},cloud=performance.now()<M.cloudUntil;
+  var cur=M.hist[n-1]||{p:0,pm:c.best.p};
+  var onGlobal=Math.abs(M.V-c.best.v)<Math.max(3,c.voc*0.02),np=nearestPeak(c,M.V),onLocal=!onGlobal&&c.peaks>1&&Math.abs(M.V-np.v)<Math.max(4,c.voc*0.025)&&np.p<c.best.p*0.985;
+  var state=M.scan?'Scanning':onGlobal?(M.locked||cur.p>c.best.p*0.997?'On the MPP':'Converging'):onLocal?'Stuck on local peak':'Climbing';
+  var atStc=M.cond==='stc'&&!M.shade&&!k.cloud;
   $('#mpptStats').innerHTML=
-    stat('Tracker output',(cur.p/1000).toFixed(2)+' kW','at '+r0(M.V)+' V')+
-    stat('Available',(c.best.p/1000).toFixed(2)+' kW','at '+r0(c.best.v)+' V')+
-    stat('Tracking efficiency',f1(eff)+' %','last 8 seconds',eff<90?'bad':(eff>98?'good':''))+
-    stat('Power peaks',c.peaks,c.peaks>1?'shaded array':'single peak',c.peaks>1?'bad':'');
-  var pmax=Math.max(1000,Math.ceil(c.best.p*1.15/1000)*1000),vx=Math.ceil(c.voc*1.05/50)*50;
-  var dots=M.trail.map(function(t,k){return {x:t[0],y:t[1],r:2.5,o:(0.15+0.5*k/M.trail.length).toFixed(2)}});
-  chart($('#mpptChart1'),{id:'mc1',xmax:vx,xt:6,ymax:pmax,xlabel:'Array voltage (V)',ylabel:'Power (W)',ylc:'p',aria:'Array power against voltage with tracker position',
-    series:[{pts:c.pw,cls:'pow'}],dots:dots,marks:[{x:c.best.v,y:c.best.p,cls:'ring',r:9},{x:M.V,y:cur.p,cls:'pow',r:6}]});
-  var pts=[],gp=[];M.hist.forEach(function(x,k){var t=-(n-1-k)*DT;pts.push([t,x.p]);gp.push([t,x.pm])});
+    stat('STC maximum',(stc.best.p/1000).toFixed(2)+' kW',r0(stc.best.v)+' V × '+f1(stc.best.i)+' A')+
+    stat('Available now',(c.best.p/1000).toFixed(2)+' kW','at '+r0(c.best.v)+' V'+(atStc?' (= STC)':''))+
+    stat('Tracker',(cur.p/1000).toFixed(2)+' kW','at '+f1(M.V)+' V')+
+    stat('Tracking efficiency',f1(eff)+' %','last 5 s · EN 50530',eff<95?'bad':(eff>99.5?'good':''))+
+    stat('Status',state,c.peaks>1?c.peaks+' peaks on the P–V curve':'single peak',state==='Stuck on local peak'?'bad':state==='On the MPP'?'good':'warn');
+  var pmax=Math.max(1000,Math.ceil(Math.max(stc.best.p,c.best.p)*1.15/1000)*1000),vx=Math.ceil(Math.max(stc.voc,c.voc)*1.04/50)*50;
+  var trs=[[]];M.trail.forEach(function(t,i){if(i&&Math.abs(t[0]-M.trail[i-1][0])>c.voc*0.12)trs.push([]);trs[trs.length-1].push([t[0],t[1]])});
+  var dots=M.trail.map(function(t,i){return {x:t[0],y:t[1],r:t[2]?3:2.5,o:(0.15+0.6*i/M.trail.length).toFixed(2)}});
+  var marks=[];
+  if(!atStc)marks.push({x:stc.best.v,y:stc.best.p,cls:'ring',r:7,label:'STC MPP '+f2(stc.best.p/1000)+' kW'});
+  c.peakList.forEach(function(p){if(Math.abs(p.v-c.best.v)>2)marks.push({x:p.v,y:p.p,cls:'bad',r:6,label:'Local peak '+f2(p.p/1000)+' kW',below:true})});
+  marks.push({x:c.best.v,y:c.best.p,cls:'ring',r:10,label:(atStc?'MPP = STC MPP ':c.peaks>1?'Global MPP ':'MPP ')+f2(c.best.p/1000)+' kW',below:!atStc&&Math.abs(c.best.v-stc.best.v)<30});
+  marks.push({x:M.V,y:cur.p,cls:'pow',r:6});
+  chart($('#mpptChart1'),{id:'mc1',xmax:vx,xt:6,ymax:pmax,xlabel:'Array voltage (V)',ylabel:'Power (W)',ylc:'p',aria:'Array P–V curve now and at STC, with the tracker path',h:320,
+    series:[{pts:stc.pw,cls:'gh'},{pts:c.pw,cls:'pow'}].concat(trs.map(function(q){return {pts:q,cls:'cur thin'}})),dots:dots,
+    vlines:[{x:c.best.v,cls:'',label:'Vmpp '+r0(c.best.v)+' V'},{x:M.V,cls:'cur'}],marks:marks});
+  var pts=[],gp=[];M.hist.forEach(function(x,i){var t=-(n-1-i)*DT;pts.push([t,x.p]);gp.push([t,x.pm])});
   if(pts.length<2){pts=[[-1,0],[0,0]];gp=pts}
   chart($('#mpptChart2'),{id:'mc2',xmin:-NH*DT,xmax:0,xt:6,ymax:pmax,xlabel:'Seconds ago',ylabel:'Power (W)',ylc:'p',aria:'Tracker power over time',series:[{pts:gp,cls:'gh'},{pts:pts,cls:'pow'}]});
   var msg;
-  if(M.algo==='fix')msg='Fixed ratio parks the array at 76 % of its open-circuit voltage. It never searches, so it misses power when temperature or shading moves the maximum.';
-  else if(eff<85&&M.shade&&c.peaks>1&&M.algo!=='scan')msg='The tracker is sitting on a local peak. The shadow made the power curve double-humped and the algorithm only compares neighbouring points. Press Global scan, or choose P&O with periodic scan.';
-  else if(cloud)msg='A cloud has cut irradiance to 30 %. The maximum moved and the tracker is following it. EN 50530 rates exactly this dynamic tracking efficiency.';
-  else if(M.algo==='scan')msg='P&O with a global scan every 6 seconds: between scans it climbs locally, and each scan jumps to the highest peak. Real inverters scan every few minutes.';
-  else if(M.algo==='po')msg='Perturb and observe nudges the voltage, checks whether power rose, and reverses if it fell. At the top it keeps stepping across the maximum; a smaller step wastes less but follows changes more slowly.';
-  else msg='Incremental conductance compares the slope dI/dV with −I/V, which is zero slope of power at the maximum, so it can hold still once it gets there.';
-  $('#mpptText').textContent=msg;
+  if(M.demoMsg)msg=M.demoMsg;
+  else if(M.scan)msg='<b>Global scan.</b> The inverter sweeps the voltage from near Voc downwards and records the power at every step (blue path), then jumps to the highest point it saw. Power dips for about 1–2 s during the sweep.';
+  else if(state==='Stuck on local peak')msg='<b>Stuck on a local peak.</b> The shadow makes the P–V curve two-humped. Perturb-and-observe only compares neighbouring points, so it climbed the nearest hump ('+f2(np.p/1000)+' kW at '+r0(np.v)+' V) and stops there, losing '+f2((c.best.p-np.p)/1000)+' kW against the global peak at '+r0(c.best.v)+' V. Press <b>Global scan</b>.';
+  else if(M.lastScan&&state==='On the MPP'&&c.peaks>1)msg='<b>Global peak found.</b> The scan saw '+f2(M.lastScan.best.p/1000)+' kW at '+r0(M.lastScan.best.v)+' V, moved there and the tracker now holds the global MPP: '+f1(eff)+' % tracking efficiency.';
+  else if(atStc&&state==='On the MPP')msg='<b>At Standard Test Conditions</b> (1000 W/m², 25 °C cell, IEC 60904-3) the live P–V curve lies exactly on the dashed STC curve, and the tracker sits on the STC maximum power point: '+f2(c.best.p/1000)+' kW at '+r0(c.best.v)+' V. The variable step shrinks to 0.08 V near the top, so the operating point stays on the MPP instead of swinging across it.';
+  else if(k.cloud)msg='<b>Cloud.</b> Irradiance fell to 30 %. The curve shrinks below the dashed STC curve, the maximum moves to a lower voltage, and the tracker follows it. EN 50530 rates this as dynamic MPPT efficiency.';
+  else if(M.algo==='po')msg='<b>Fixed-step P&O.</b> With a constant '+f1(M.step)+' V step it can never stop: it keeps stepping across the maximum, which costs power. The standard variable-step version shrinks the step near the top.';
+  else if(M.cond==='field')msg='<b>Field conditions.</b> Below 1000 W/m² and with a hot cell, the curve falls below the dashed STC curve (lower current and lower voltage). The tracker settles on this curve\'s own maximum, '+f2(c.best.p/1000)+' kW at '+r0(c.best.v)+' V.';
+  else msg='<b>Tracking.</b> The tracker climbs the P–V curve toward the maximum and settles there.';
+  $('#mpptText').innerHTML=msg;
+}
+function mDemo(){
+  var id=++M.demo;
+  function at(ms,f){setTimeout(function(){if(M.demo===id){f();renderMppt()}},ms)}
+  M.cond='stc';setChip($('#mCond'),'stc');M.algo='vpo';setChip($('#algoChips'),'vpo');M.shade=false;$('#mShade').checked=false;M.run=true;$('#mRun').textContent='Pause';
+  mReset();for(var i=0;i<200;i++)tick();M.trail=[];M.demoMsg='<b>Step 1 · Healthy array at STC.</b> The tracker sits on the maximum power point, '+f2(mpptCurve().best.p/1000)+' kW, exactly on the dashed STC curve.';
+  at(3500,function(){M.shade=true;$('#mShade').checked=true;M.trail=[];M.demoMsg='<b>Step 2 · A shadow arrives</b> on four modules (two in string 1, two in string 2). The P–V curve drops and splits into two humps. Watch the tracker climb the hump nearest to it.'});
+  at(8000,function(){var c=mpptCurve(),np=nearestPeak(c,M.V);M.demoMsg='<b>Step 3 · Stuck on a local peak.</b> The tracker holds '+f2(np.p/1000)+' kW at '+r0(np.v)+' V. The global peak is '+f2(c.best.p/1000)+' kW at '+r0(c.best.v)+' V, so '+f2((c.best.p-np.p)/1000)+' kW is being lost.'});
+  at(12500,function(){M.trail=[];startScan();M.demoMsg='<b>Step 4 · Global scan.</b> The inverter sweeps the whole voltage range and records the power at every point.'});
+  at(17500,function(){var c=mpptCurve();M.demoMsg='<b>Step 5 · On the global MPP.</b> The tracker jumped to the highest point, '+f2(c.best.p/1000)+' kW at '+r0(c.best.v)+' V, and holds it. Real inverters repeat this scan every few minutes.'});
+  at(23000,function(){M.demoMsg=''});
 }
 (function(){
-  mkChips($('#algoChips'),[['po','Perturb and observe'],['ic','Incremental conductance'],['scan','P&O + periodic scan'],['fix','Fixed 76 % of Voc']],M.algo,function(k){M.algo=k;M.first=true;renderMppt()});
+  mkChips($('#mCond'),[['stc','Standard Test Conditions'],['field','Field (sliders)']],M.cond,function(k){M.cond=k;M.demo++;M.demoMsg='';renderMppt()});
+  mkChips($('#algoChips'),[['vpo','Variable-step P&O'],['ic','Incremental conductance'],['scan','P&O + global scan'],['po','Fixed-step P&O']],M.algo,function(k){M.algo=k;M.first=true;M.demo++;M.demoMsg='';renderMppt()});
   var h=$('#mpptCtl');
-  mkSlider(h,{id:'mg',label:'Irradiance',min:100,max:1100,step:10,value:M.G,unit:' W/m²',onInput:function(v){M.G=v;renderMppt()}});
-  mkSlider(h,{id:'mt',label:'Air temperature',min:5,max:48,step:1,value:M.Ta,unit:' °C',onInput:function(v){M.Ta=v;renderMppt()}});
-  mkSlider(h,{id:'ms',label:'Step size',min:0.5,max:10,step:0.5,value:M.step,unit:' V',dec:1,onInput:function(v){M.step=v}});
-  $('#mShade').addEventListener('change',function(e){M.shade=e.target.checked;renderMppt()});
+  mkSlider(h,{id:'mg',label:'Irradiance (field)',min:100,max:1100,step:10,value:M.G,unit:' W/m²',onInput:function(v){M.G=v;if(M.cond!=='field'){M.cond='field';setChip($('#mCond'),'field')}renderMppt()}});
+  mkSlider(h,{id:'mt',label:'Air temperature (field)',min:5,max:48,step:1,value:M.Ta,unit:' °C',onInput:function(v){M.Ta=v;if(M.cond!=='field'){M.cond='field';setChip($('#mCond'),'field')}renderMppt()}});
+  mkSlider(h,{id:'ms',label:'Largest step',min:0.5,max:10,step:0.5,value:M.step,unit:' V',dec:1,onInput:function(v){M.step=v}});
+  $('#mShade').addEventListener('change',function(e){M.shade=e.target.checked;M.demo++;M.demoMsg='';M.trail=[];renderMppt()});
   $('#mRun').addEventListener('click',function(){M.run=!M.run;this.textContent=M.run?'Pause':'Resume'});
   $('#mCloud').addEventListener('click',function(){M.cloudUntil=performance.now()+4000});
-  $('#mScan').addEventListener('click',function(){gScan();renderMppt()});
-  $('#mReset').addEventListener('click',function(){mReset();for(var k=0;k<30;k++)tick();renderMppt()});
+  $('#mScan').addEventListener('click',function(){M.trail=[];startScan();renderMppt()});
+  $('#mDemo').addEventListener('click',mDemo);
+  $('#mReset').addEventListener('click',function(){M.demo++;M.demoMsg='';mReset();for(var k=0;k<30;k++)tick();renderMppt()});
 })();
 
 /* ================= TEST BENCH ================= */
