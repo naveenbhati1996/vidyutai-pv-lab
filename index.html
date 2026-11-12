@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VidyutAI PV Demo</title>
+<title>Solar PV Lab Demo · SPEL, IIT Gandhinagar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -116,7 +116,9 @@ svg text{font-family:var(--f-data);font-size:12px}
 .card-scene h1{font:700 76px var(--f-display);margin:10px 0 6px;letter-spacing:-.01em}
 .card-scene p{font-size:24px;color:#C7D5DF;margin:0 0 30px;max-width:720px;line-height:1.4}
 .card-scene .who{font-size:20px;color:#fff;line-height:1.55}
-.card-scene .who span{color:#9FB4C3}
+.card-scene .who span{color:#9FB4C3;display:block;margin-top:14px;font-size:17px}
+.card-scene img.lg{height:130px;width:auto;border-radius:10px;background:#fff;padding:6px 10px;display:block}
+.card-scene .lgfb{display:none;font:700 28px var(--f-display);color:#fff}
 .card-scene svg.sunarr{position:absolute;right:80px;top:120px;width:300px;opacity:.95}
 /* ratings */
 .rgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:20px 28px 0}
@@ -157,14 +159,14 @@ tr.hl td{background:var(--sunSoft)}
 </head>
 <body>
 <div id="fit"><div id="stage">
-  <div id="top"><span class="brand">VIDYUTAI · SOLAR PV LAB</span><span class="ttl" id="tTitle"></span><span class="tag" id="tTag" hidden></span><span class="step" id="tStep"></span></div>
+  <div id="top"><span class="brand">SPEL · IIT GANDHINAGAR</span><span class="ttl" id="tTitle"></span><span class="tag" id="tTag" hidden></span><span class="step" id="tStep"></span></div>
 
   <!-- title -->
   <section class="scene card-scene" id="s-title"><div class="bar"></div>
-    <div class="k">PROJECT: VIDYUTAI</div>
+    <div class="k">SMART POWER ELECTRONICS LABORATORY</div>
     <h1>Solar PV Lab</h1>
     <p>10 kW bifacial rooftop plant: what shading, dust, hot spots and faults do to the I–V curve, and how much power each one costs.</p>
-    <div class="who">Prepared by <b>Mr. Naveen Bhati</b><br><span>Department of Electrical Engineering, IIT Gandhinagar</span><br>PI: <b>Prof. Pallavi Bhardwaj</b></div>
+    <div class="who"><img class="lg" src="https://labs.iitgn.ac.in/spel/assets/images/logo-iitgn-spel.jpg-958x390.jpg" alt="SPEL and IIT Gandhinagar logos" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="lgfb">SPEL · IIT Gandhinagar</div></div>
     <svg class="sunarr" viewBox="0 0 300 260" aria-hidden="true"><circle cx="230" cy="55" r="34" fill="#F2B33D"/><g stroke="#F2B33D" stroke-width="5" stroke-linecap="round"><line x1="230" y1="5" x2="230" y2="-8"/><line x1="280" y1="55" x2="294" y2="55"/><line x1="266" y1="19" x2="276" y2="9"/><line x1="194" y1="19" x2="184" y2="9"/><line x1="266" y1="91" x2="276" y2="101"/></g><g fill="#22476F" stroke="#6D7F8E" stroke-width="2"><rect x="10" y="130" width="80" height="50"/><rect x="96" y="130" width="80" height="50"/><rect x="182" y="130" width="80" height="50"/><rect x="10" y="190" width="80" height="50"/><rect x="96" y="190" width="80" height="50"/><rect x="182" y="190" width="80" height="50"/></g></svg>
   </section>
 
@@ -217,10 +219,10 @@ tr.hl td{background:var(--sunSoft)}
 
   <!-- end -->
   <section class="scene card-scene" id="s-end"><div class="bar"></div>
-    <div class="k">PROJECT: VIDYUTAI</div>
+    <div class="k">SMART POWER ELECTRONICS LABORATORY</div>
     <h1 style="font-size:58px">Thank you</h1>
     <p id="endLine"></p>
-    <div class="who">Mr. Naveen Bhati · Department of Electrical Engineering, IIT Gandhinagar<br>PI: <b>Prof. Pallavi Bhardwaj</b><br><span>Model based on IEC 61215, IEC TS 62446-3, IEC 62548, IEC 60891, EN 50530</span></div>
+    <div class="who"><img class="lg" src="https://labs.iitgn.ac.in/spel/assets/images/logo-iitgn-spel.jpg-958x390.jpg" alt="SPEL and IIT Gandhinagar logos" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="lgfb">SPEL · IIT Gandhinagar</div><span>Model based on IEC 61215, IEC TS 62446-3, IEC 62548, IEC 60891, EN 50530</span></div>
   </section>
 
   <div id="cap" class="hide"></div>
