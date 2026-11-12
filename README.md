@@ -1,16 +1,15 @@
-# VidyutAI Solar PV Lab
+# Solar PV Lab · SPEL, IIT Gandhinagar
 
 Interactive model of a 10.2 kWp rooftop bifacial PV plant (18 × 565 W modules, 3 strings × 6) at IIT Gandhinagar.
 
-**Prepared by** Mr. Naveen Bhati, Department of Electrical Engineering, IIT Gandhinagar  
-**PI:** Prof. Pallavi Bhardwaj · **Project:** VidyutAI
+**Smart Power Electronics Laboratory (SPEL), IIT Gandhinagar**
 
 ## Open it
 
 | Page | What it shows |
 |---|---|
 | `index.html` | Demo player (~83 s): ratings, measured lab data, then healthy / shading / dust / hot spot / line-line fault / shorted diode / open string, each followed by its I–V result and power loss |
-| `lab.html` | Interactive lab: Plant, Curves, Shading, **Sun & shadow**, Hot spot, Faults, MPPT, Test bench, Life, **Code**, Standards |
+| `lab.html` | Interactive lab (MPPT tab: STC reference, variable-step tracking, shading demo with local and global peaks): Plant, Curves, Shading, **Sun & shadow**, Hot spot, Faults, MPPT, Test bench, Life, **Code**, Standards |
 | `VidyutAI_Solar_PV_Lab_Demo.mp4` | The demo as a video |
 | `data/VidyutAI_Load_Resistance_Table.xlsx` | Rheostat / DC e-load resistance settings (live formulas) |
 
