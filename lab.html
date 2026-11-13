@@ -1272,13 +1272,13 @@ function renderFaults(){
 }
 
 /* ================= MPPT ================= */
-var M={algo:'vpo',cond:'stc',G:850,Ta:32,step:3,shade:false,run:true,cloudUntil:0,V:0,prevV:0,prevP:0,prevI:0,dir:-1,first:true,hist:[],trail:[],key:'',c:null,A:null,n:0,scan:null,stc:null,locked:false,lastScan:null,demo:0,demoMsg:''};
+var M={algo:'vpo',cond:'stc',G:850,Tc:45,alb:0,step:3,shade:false,run:true,cloudUntil:0,V:0,prevV:0,prevP:0,prevI:0,dir:-1,first:true,hist:[],trail:[],key:'',c:null,A:null,n:0,scan:null,stc:null,locked:false,lastScan:null,demo:0,demoMsg:''};
 var DT=0.08,NH=220,TA_STC=25-(MOD.nmot-20)/800*1000;
 /* Standard Test Conditions: 1000 W/m² on the front, cell at 25 °C, AM1.5, no rear light (IEC 60904-3) */
 function stcCurve(){if(!M.stc)M.stc=arrCurve(build(scenario({G:1000,Ta:TA_STC,alb:0})),300);return M.stc}
 function mCond(){
   var cloud=performance.now()<M.cloudUntil,f=cloud?0.3:1;
-  return M.cond==='stc'?{G:1000*f,Ta:TA_STC,alb:0,cloud:cloud,T:25}:{G:M.G*f,Ta:M.Ta,alb:0.25,cloud:cloud,T:tCell(M.Ta,M.G*f)};
+  return M.cond==='stc'?{G:1000*f,Ta:TA_STC,alb:0,cloud:cloud,T:25}:{G:M.G*f,Ta:M.Tc-(MOD.nmot-20)/800*M.G*f,alb:M.alb,cloud:cloud,T:M.Tc};
 }
 M.pat=[[0,0],[0,1],[1,0],[1,1]];M.shf=0.8;
 function shadeMppt(S){M.pat.forEach(function(q){S.sh[q[0]][q[1]]=[M.shf,M.shf,M.shf]})}
@@ -1323,7 +1323,7 @@ function renderMppt(){
   var cur=M.hist[n-1]||{p:0,pm:c.best.p};
   var onGlobal=Math.abs(M.V-c.best.v)<Math.max(3,c.voc*0.02),np=nearestPeak(c,M.V),onLocal=!onGlobal&&c.peaks>1&&Math.abs(M.V-np.v)<Math.max(4,c.voc*0.025)&&np.p<c.best.p*0.985;
   var state=M.scan?'Scanning':onGlobal?(M.locked||cur.p>c.best.p*0.997?'On the MPP':'Converging'):onLocal?'Stuck on local peak':'Climbing';
-  var atStc=M.cond==='stc'&&!M.shade&&!k.cloud;
+  var atStc=Math.abs(k.G-1000)<0.5&&Math.abs(k.T-25)<0.5&&k.alb===0&&!M.shade&&!k.cloud;
   $('#mpptStats').innerHTML=
     stat('STC maximum',(stc.best.p/1000).toFixed(2)+' kW',r0(stc.best.v)+' V × '+f1(stc.best.i)+' A')+
     stat('Available now',(c.best.p/1000).toFixed(2)+' kW','at '+r0(c.best.v)+' V'+(atStc?' (= STC)':''))+
@@ -1352,7 +1352,8 @@ function renderMppt(){
   else if(atStc&&state==='On the MPP')msg='<b>At Standard Test Conditions</b> (1000 W/m², 25 °C cell, IEC 60904-3) the live P–V curve lies exactly on the dashed STC curve, and the tracker sits on the STC maximum power point: '+f2(c.best.p/1000)+' kW at '+r0(c.best.v)+' V. The variable step shrinks to 0.08 V near the top, so the operating point stays on the MPP instead of swinging across it.';
   else if(k.cloud)msg='<b>Cloud.</b> Irradiance fell to 30 %. The curve shrinks below the dashed STC curve, the maximum moves to a lower voltage, and the tracker follows it. EN 50530 rates this as dynamic MPPT efficiency.';
   else if(M.algo==='po')msg='<b>Fixed-step P&O.</b> With a constant '+f1(M.step)+' V step it can never stop: it keeps stepping across the maximum, which costs power. The standard variable-step version shrinks the step near the top.';
-  else if(M.cond==='field')msg='<b>Field conditions.</b> Below 1000 W/m² and with a hot cell, the curve falls below the dashed STC curve (lower current and lower voltage). The tracker settles on this curve\'s own maximum, '+f2(c.best.p/1000)+' kW at '+r0(c.best.v)+' V.';
+  else if(M.cond==='field'){var why=[];if(k.G<999.5)why.push('less light ('+r0(k.G)+' W/m², lower current)');if(k.G>1000.5)why.push('more light ('+r0(k.G)+' W/m², higher current)');if(k.T>25.5)why.push('a hotter cell ('+r0(k.T)+' °C, lower voltage)');if(k.T<24.5)why.push('a cooler cell ('+r0(k.T)+' °C, higher voltage)');if(k.alb>0)why.push('rear light (albedo '+k.alb.toFixed(2)+', higher current)');
+    msg='<b>Field conditions.</b> The curve differs from the dashed STC curve because of '+(why.length?why.join(', '):'the conditions')+'. That is correct: STC is only 1000 W/m², a 25 °C cell and no rear light. Set those three and the curve lies on the dashed line. The tracker settles on this curve\'s own maximum, '+f2(c.best.p/1000)+' kW at '+r0(c.best.v)+' V.'}
   else msg='<b>Tracking.</b> The tracker climbs the P–V curve toward the maximum and settles there.';
   $('#mpptText').innerHTML=msg;
 }
@@ -1372,7 +1373,8 @@ function mDemo(){
   mkChips($('#algoChips'),[['vpo','Variable-step P&O'],['ic','Incremental conductance'],['scan','P&O + global scan'],['po','Fixed-step P&O']],M.algo,function(k){M.algo=k;M.first=true;M.demo++;M.demoMsg='';renderMppt()});
   var h=$('#mpptCtl');
   mkSlider(h,{id:'mg',label:'Irradiance (field)',min:100,max:1100,step:10,value:M.G,unit:' W/m²',onInput:function(v){M.G=v;if(M.cond!=='field'){M.cond='field';setChip($('#mCond'),'field')}renderMppt()}});
-  mkSlider(h,{id:'mt',label:'Air temperature (field)',min:5,max:48,step:1,value:M.Ta,unit:' °C',onInput:function(v){M.Ta=v;if(M.cond!=='field'){M.cond='field';setChip($('#mCond'),'field')}renderMppt()}});
+  mkSlider(h,{id:'mt',label:'Cell temperature (field)',min:0,max:85,step:1,value:M.Tc,unit:' °C',onInput:function(v){M.Tc=v;if(M.cond!=='field'){M.cond='field';setChip($('#mCond'),'field')}renderMppt()}});
+  mkSlider(h,{id:'ma',label:'Albedo (rear light · 0 = front only)',min:0,max:0.8,step:0.01,value:M.alb,dec:2,onInput:function(v){M.alb=v;if(M.cond!=='field'){M.cond='field';setChip($('#mCond'),'field')}renderMppt()}});
   mkSlider(h,{id:'ms',label:'Largest step',min:0.5,max:10,step:0.5,value:M.step,unit:' V',dec:1,onInput:function(v){M.step=v}});
   $('#mShade').addEventListener('change',function(e){M.shade=e.target.checked;M.demo++;M.demoMsg='';M.trail=[];renderMppt()});
   $('#mRun').addEventListener('click',function(){M.run=!M.run;this.textContent=M.run?'Pause':'Resume'});
