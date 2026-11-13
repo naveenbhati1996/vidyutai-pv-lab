@@ -241,8 +241,12 @@ pre.code{margin:6px 0 0;padding:12px;background:#0F2230;color:#D7E6F0;border-rad
       <div class="card controls">
         <h2>I–V and P–V curves</h2>
         <div class="chips" id="cvLevel" role="group" aria-label="Level"></div>
+        <button class="btn primary" id="cvSetStc" type="button">Set STC: 1000 W/m², 25 °C cell, front only</button>
+        <h3>Temperature input</h3>
+        <div class="chips" id="cvTmode" role="group" aria-label="Temperature input"></div>
         <div id="cvCtl"></div>
-        <label class="toggle"><input type="checkbox" id="cvStc" checked> Show standard test conditions (1000 W/m², 25 °C, front only)</label>
+        <label class="toggle"><input type="checkbox" id="cvStc" checked> Show standard test conditions (1000 W/m², 25 °C cell, front only)</label>
+        <p class="note" id="cvStcBadge"></p>
       </div>
       <div class="viz">
         <div class="stats" id="cvStats"></div>
@@ -995,38 +999,54 @@ function stepDemo(){
 function stopDemo(){if(demoT)clearTimeout(demoT);demoT=null;$('#pDemo').textContent='Play guided demo'}
 
 /* ================= CURVES ================= */
-var CV={lvl:'module',G:1000,Ta:25,alb:0.25,useCell:true};
+var CV={lvl:'module',G:1000,T:25,alb:0,tmode:'cell'};
+var cvSl={};
+function cvTa(){return CV.tmode==='cell'?CV.T-(MOD.nmot-20)/800*CV.G:CV.T}
+function cvTcell(){return CV.tmode==='cell'?CV.T:tCell(CV.T,CV.G)}
 (function(){
   mkChips($('#cvLevel'),[['module','One module'],['string','One string (6)'],['array','Array (18)']],CV.lvl,function(k){CV.lvl=k;renderCurves()});
+  mkChips($('#cvTmode'),[['cell','Cell temperature (as in STC)'],['air','Air temperature (field)']],CV.tmode,function(k){
+    var Tc=cvTcell();CV.tmode=k;CV.T=k==='cell'?Math.round(Tc):Math.round(Tc-(MOD.nmot-20)/800*CV.G);buildCvT();renderCurves()});
   var c=$('#cvCtl');
-  mkSlider(c,{id:'cvG',label:'Irradiance on the front',min:100,max:1100,step:10,value:CV.G,unit:' W/m²',onInput:function(v){CV.G=v;renderCurves()}});
-  mkSlider(c,{id:'cvT',label:'Air temperature',min:0,max:48,step:1,value:CV.Ta,unit:' °C',onInput:function(v){CV.Ta=v;renderCurves()}});
-  mkSlider(c,{id:'cvA',label:'Albedo (rear light)',min:0,max:0.8,step:0.01,value:CV.alb,dec:2,onInput:function(v){CV.alb=v;renderCurves()}});
+  cvSl.G=mkSlider(c,{id:'cvG',label:'Irradiance on the front',min:100,max:1100,step:10,value:CV.G,unit:' W/m²',onInput:function(v){CV.G=v;renderCurves()}});
+  var tw=document.createElement('div');tw.id='cvTwrap';c.appendChild(tw);
+  cvSl.A=mkSlider(c,{id:'cvA',label:'Albedo (rear light · 0 = front only)',min:0,max:0.8,step:0.01,value:CV.alb,dec:2,onInput:function(v){CV.alb=v;renderCurves()}});
+  buildCvT();
   $('#cvStc').addEventListener('change',renderCurves);
+  $('#cvSetStc').addEventListener('click',function(){CV.G=1000;CV.alb=0;CV.tmode='cell';CV.T=25;setChip($('#cvTmode'),'cell');cvSl.G.set(1000);cvSl.A.set(0);buildCvT();$('#cvStc').checked=true;renderCurves()});
 })();
+function buildCvT(){var w=$('#cvTwrap');w.innerHTML='';
+  cvSl.T=mkSlider(w,CV.tmode==='cell'?{id:'cvT',label:'Cell temperature',min:0,max:85,step:1,value:CV.T,unit:' °C',onInput:function(v){CV.T=v;renderCurves()}}
+                                     :{id:'cvT',label:'Air temperature',min:-10,max:48,step:1,value:CV.T,unit:' °C',onInput:function(v){CV.T=v;renderCurves()}})}
 function levelA(n,G,Ta,alb,T){
   var nm=n==='module'?1:6,ns=n==='array'?3:1,list=[];
   for(var i=0;i<ns;i++)list.push(single(nm,G,Ta,alb,T));
   return makeA(list,G,Ta,T==null?tCell(Ta,G):T);
 }
 function renderCurves(){
-  var A=levelA(CV.lvl,CV.G,CV.Ta,CV.alb),c=arrCurve(A,180);
+  var T=cvTcell(),Ta=cvTa();
+  var A=levelA(CV.lvl,CV.G,Ta,CV.alb,T),c=arrCurve(A,180);
   var stc=arrCurve(levelA(CV.lvl,1000,25,0,25),180);
-  var fr=arrCurve(levelA(CV.lvl,CV.G,CV.Ta,0),120),bif=fr.best.p>0?100*(c.best.p/fr.best.p-1):0;
-  var T=tCell(CV.Ta,CV.G);
+  var fr=arrCurve(levelA(CV.lvl,CV.G,Ta,0,T),120),bif=fr.best.p>0?100*(c.best.p/fr.best.p-1):0;
+  var atStc=CV.G===1000&&Math.abs(T-25)<0.5&&CV.alb===0;
   var ser=[];if($('#cvStc').checked){ser.push({pts:stc.pts,cls:'gh'});ser.push({pts:stc.pw,cls:'gh',ax:'y2'})}
   ser.push({pts:c.pts,cls:'cur'});ser.push({pts:c.pw,cls:'pow',ax:'y2'});
   var vx=Math.max(c.voc,stc.voc)*1.05,ix=Math.max(c.isc,stc.isc)*1.15,px=Math.max(c.best.p,stc.best.p)*1.15;
   chart($('#cvChart'),{id:'cvc',xmax:vx,xt:6,ymax:ix,y2:{max:px,label:'Power (W)',c:'p'},xlabel:'Voltage (V)',ylabel:'Current (A)',ylc:'c',aria:'Current and power against voltage',
-    series:ser,marks:[{x:c.best.v,y:c.best.p,ax:'y2',cls:'pow',label:r0(c.best.p)+' W'}]});
+    series:ser,marks:($('#cvStc').checked&&!atStc?[{x:stc.best.v,y:stc.best.p,ax:'y2',cls:'ring',label:'STC '+r0(stc.best.p)+' W'}]:[]).concat([{x:c.best.v,y:c.best.p,ax:'y2',cls:'pow',label:(atStc?'MPP = STC ':'')+r0(c.best.p)+' W',below:!atStc&&Math.abs(c.best.v-stc.best.v)<stc.voc*0.06}])});
+  $('#cvStcBadge').innerHTML=atStc?'<b style="color:var(--good)">At STC:</b> the live curves lie exactly on the dashed STC curves (Isc '+f1(c.isc)+' A, Voc '+f1(c.voc)+' V, Pmax '+r0(c.best.p)+' W).'
+    :'Not at STC: '+[CV.G!==1000?'irradiance '+CV.G+' W/m²':'',Math.abs(T-25)>=0.5?'cell '+r0(T)+' °C':'',CV.alb>0?'rear light on (albedo '+CV.alb.toFixed(2)+')':''].filter(Boolean).join(', ')+'. Press <b>Set STC</b> to make the curves overlap.';
   $('#cvStats').innerHTML=
     stat('Max power',r0(c.best.p)+' W','STC '+r0(stc.best.p)+' W')+
     stat('Vmp × Imp',f1(c.best.v)+' V',f1(c.best.i)+' A')+
     stat('Open-circuit V',f1(c.voc)+' V','STC '+f1(stc.voc)+' V')+
     stat('Short-circuit I',f1(c.isc)+' A','STC '+f1(stc.isc)+' A')+
     stat('Fill factor',f1(c.ff*100)+' %')+
-    stat('Cell temperature',r0(T)+' °C','bifacial gain '+f1(bif)+' %');
-  $('#cvText').textContent='Short-circuit current follows irradiance: at '+CV.G+' W/m² it is '+f1(c.isc)+' A. Open-circuit voltage falls as the cells warm ('+r0(T)+' °C here, about −0.25 % per °C) and only slowly with irradiance. The rear side adds light reflected from the roof: with albedo '+CV.alb.toFixed(2)+' the rear receives '+r0(CV.G*CV.alb*VF)+' W/m², worth about '+f1(bif)+' % more power. Before comparing a field curve with the datasheet, correct it to 1000 W/m² and 25 °C (IEC 60891).';
+    stat('Cell temperature',r0(T)+' °C',CV.tmode==='air'?'air '+r0(Ta)+' °C · bifacial '+f1(bif)+' %':'bifacial gain '+f1(bif)+' %');
+  $('#cvText').innerHTML='<b>STC</b> (IEC 60904-3) means 1000 W/m² on the front, <b>cell</b> temperature 25 °C, AM1.5 spectrum and no rear light, so the curve meets the datasheet: Isc '+f1(stc.isc)+' A, Voc '+f1(stc.voc)+' V, Vmp × Imp = '+f1(stc.best.v)+' V × '+f1(stc.best.i)+' A. '+
+    'Short-circuit current follows irradiance (now '+f1(c.isc)+' A at '+CV.G+' W/m²). Open-circuit voltage falls as the cells warm (−0.25 % per °C; cell '+r0(T)+' °C now). '+
+    'An <b>air</b> temperature of 25 °C is not STC: in sunlight the cell runs about '+r0((MOD.nmot-20)/800*1000)+' °C hotter (NMOT method), so Voc drops. Light reflected onto the rear side (albedo) adds current'+(CV.alb>0?': '+r0(CV.G*CV.alb*VF)+' W/m² now, about '+f1(bif)+' % more power':'')+'. '+
+    'Before comparing a field curve with the datasheet, correct it to STC (IEC 60891).';
 }
 
 /* ================= SHADING ================= */
