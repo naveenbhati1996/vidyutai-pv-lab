@@ -1,68 +1,50 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+</style>
 <title>Solar PV Lab · SPEL, IIT Gandhinagar</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 /* Layout: instrument-panel feel kept from the first PV Lab. Title strip, tab switch, then controls beside live drawings and plots (stacks on phones). */
 :root{
-  --bg:#F3F6FA; --panel:#FFFFFF; --ink:#0B1F33; --muted:#566B80; --line:#DCE3EB; --grid:#E8EDF3;
-  --sun:#C27400; --sunSoft:#FFF3DC; --cur:#0B7A8C; --bad:#C2363C; --good:#1F7A4D; --warn:#A86A00;
-  --navy:#0B2545; --navy2:#13396B; --accent:#E8A317; --shadow:0 1px 2px rgba(11,31,51,.06),0 6px 18px rgba(11,31,51,.06);
+  --bg:#FFFFFF; --panel:#FFFFFF; --ink:#1A1A1A; --muted:#595959; --line:#D0D0D0; --grid:#ECECEC;
+  --sun:#C55A11; --sunSoft:#FBE9DD; --cur:#0B7A8C; --bad:#C00000; --good:#2E7D32; --warn:#A86A00;
+  --navy:#1F3864; --navy2:#2E5597; --accent:#2E5597; --shadow:none; color-scheme:light;
   --s1:#2F6FB0; --s2:#8A4FB8; --s3:#2A8C6B;
   --sky:#DCEBF5; --sky2:#EEF5FA; --roof:#D9CBB4; --roofLine:#C4B396; --frame:#9AA9B5; --cell:#1D3B5E; --cellLine:#34587F;
   --shade:#1A1A1A; --cable:#4A5865; --sunDisc:#F2B33D; --cloud:#FFFFFF; --boxFill:#F6F8FA; --boxLine:#8A9AA8;
-  --f-display:'Manrope','Segoe UI',system-ui,sans-serif;
-  --f-body:'Inter','Segoe UI',system-ui,sans-serif;
-  --f-data:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --f-display:Calibri,Carlito,'Segoe UI',Arial,sans-serif;
+  --f-body:Calibri,Carlito,'Segoe UI',Arial,sans-serif;
+  --f-data:Calibri,Carlito,'Segoe UI',Arial,sans-serif;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0A1520; --panel:#11202D; --ink:#E5EDF3; --muted:#8CA3B3; --line:#233746; --grid:#1A2D3A;
-    --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
-    --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
-    --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
-    --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; --navy:#0B2545; --navy2:#16416F; --accent:#E8A317; --shadow:none; color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0A1520; --panel:#11202D; --ink:#E5EDF3; --muted:#8CA3B3; --line:#233746; --grid:#1A2D3A;
-  --sun:#F2A63A; --sunSoft:#3A2A10; --cur:#4CC3CC; --bad:#F27573; --good:#6CCB8B; --warn:#E9B04F;
-  --s1:#6FA8E8; --s2:#C08AF0; --s3:#5FC9A0;
-  --sky:#13283A; --sky2:#0F2131; --roof:#3A3428; --roofLine:#4D4535; --frame:#6D7F8E; --cell:#22476F; --cellLine:#3A6894;
-  --shade:#000000; --cable:#9AACBA; --sunDisc:#F2B33D; --cloud:#C9D6E0; --boxFill:#172B3A; --boxLine:#4E6476; --navy:#0B2545; --navy2:#16416F; --accent:#E8A317; --shadow:none; color-scheme:dark;
-}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+body{margin:0;background:#FFFFFF;color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 *{box-sizing:border-box}
 .wrap{max-width:1160px;margin:0 auto}
 h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
-h1{font-size:clamp(30px,4.2vw,44px);font-weight:800;letter-spacing:-.02em}
+h1{font-size:clamp(26px,3.6vw,40px);font-weight:700}
 h2{font-size:18px;font-weight:700}
-h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
-.brandbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--line)}
-.brandbar .logo{display:flex;align-items:center;gap:14px;min-width:0}
-.brandbar img{height:88px;width:auto;display:block;border-radius:6px;background:#fff}
-.brandbar .fallback{display:none;font:800 18px var(--f-display);color:var(--navy)}
-.brandbar .inst{text-align:right;line-height:1.3}
-.brandbar .inst b{display:block;font:800 16px var(--f-display);color:var(--ink);letter-spacing:-.01em}
-.brandbar .inst span{font-size:13px;color:var(--muted)}
-.hero{margin-top:18px;border-radius:16px;padding:clamp(20px,3.4vw,36px);color:#fff;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 62%,#1C5A8C 100%);box-shadow:var(--shadow);position:relative;overflow:hidden}
-.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(232,163,23,.35),rgba(232,163,23,0) 70%)}
-.hero .eyebrow{font:700 12px var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
-.hero h1{margin-top:6px;color:#fff}
-.lede{margin:14px 0 0;max-width:78ch;font-size:clamp(17px,1.7vw,20px);line-height:1.6;text-align:justify;hyphens:auto;color:#EAF1F8;position:relative;z-index:1}
-.lede strong{color:#fff;font-weight:700;background:linear-gradient(transparent 62%,rgba(232,163,23,.45) 62%)}
-.specgrid{margin-top:20px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));position:relative;z-index:1}
-.specgrid div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 12px}
-.specgrid span{display:block;font-size:12px;color:#B9CCE0;letter-spacing:.02em}
-.specgrid b{display:block;font:700 18px var(--f-display);color:#fff;margin-top:2px}
-.specgrid small{display:block;font-size:12px;color:#D9E4EF}
-.spec{margin-top:16px;font-size:15px;line-height:1.6;text-align:justify;color:#EAF1F8;border-left:4px solid var(--accent);padding:8px 0 8px 14px;position:relative;z-index:1}
-.spec b{color:#fff}
-@media (max-width:640px){.brandbar img{height:64px}.brandbar .inst{text-align:left}.lede,.spec{text-align:left}}
+h3{font-size:15px;font-weight:700;color:var(--navy)}
+.thead{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;padding:16px 0 4px}
+.thead h1{text-align:center;color:var(--navy);font-weight:700;padding-bottom:8px;border-bottom:3px solid var(--navy);margin:0 3%}
+.lg{background-image:url("https://labs.iitgn.ac.in/spel/assets/images/logo-iitgn-spel.jpg-958x390.jpg");background-repeat:no-repeat;background-size:auto 100%}
+.lg-iitgn{height:88px;width:90px;background-position:right center}
+.lg-spel{height:92px;width:132px;background-position:left center}
+.subt{text-align:center;color:var(--muted);font-size:17px;margin:6px 0 0}
+.intro{display:grid;gap:18px;grid-template-columns:minmax(0,1fr);margin-top:18px}
+@media (min-width:880px){.intro{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}}
+.intro h2{margin:0 0 6px;color:var(--ink);font-size:22px}
+.lede{margin:0;font-size:clamp(17px,1.6vw,19px);line-height:1.55;text-align:justify;hyphens:auto}
+.lede strong{color:var(--navy)}
+.blist{list-style:none;margin:8px 0 0;padding:0;font-size:17px}
+.blist li{position:relative;padding-left:24px;margin:3px 0}
+.blist li::before{content:"\27A2";position:absolute;left:0;top:0;color:var(--ink)}
+.greenbox{background:#EEF7CF;border-radius:16px;padding:16px 20px;font-size:17px;line-height:1.55}
+.greenbox h2{margin:0 0 4px}
+.greenbox b{color:var(--navy)}
+@media (max-width:640px){.lg-iitgn{height:52px;width:54px}.lg-spel{height:50px;width:72px}.thead{gap:8px}.lede{text-align:left}}
 .tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:4px;margin:20px 0;padding:5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);position:sticky;top:8px;z-index:20}
 .tabs button{min-width:0;padding:10px 6px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:600 14px var(--f-body);cursor:pointer;transition:background .15s,color .15s}
 .tabs button:hover{color:var(--ink);background:var(--bg)}
@@ -76,7 +58,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .sl{display:block}
 .sl-top{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:2px}
 .sl output{font-family:var(--f-data);font-weight:500;color:var(--sun)}
-input[type=range]{width:100%;accent-color:var(--sun);margin:0;height:28px}
+input[type=range]{width:100%;accent-color:var(--navy);margin:0;height:28px}
 select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:500 13px var(--f-body)}
 .selrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px}
 .selrow label{font-size:12px;color:var(--muted);display:grid;gap:3px}
@@ -89,7 +71,7 @@ select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px
 .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
 .btn[aria-pressed="true"]{background:var(--sunSoft);border-color:var(--sun)}
 .toggle{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
-.toggle input{width:18px;height:18px;accent-color:var(--sun);margin:0}
+.toggle input{width:18px;height:18px;accent-color:var(--navy);margin:0}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-bottom:6px}
 .legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
 .legend i.cur{border-color:var(--cur)} .legend i.pow{border-color:var(--sun)} .legend i.bad{border-color:var(--bad)}
@@ -162,27 +144,49 @@ pre.code{margin:6px 0 0;padding:12px;background:#0F2230;color:#D7E6F0;border-rad
 #suSeason{font-size:12px}#suSeason th,#suSeason td{padding:5px 5px}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* SPEL template overrides */
+.card,.stat,.tabs{box-shadow:none!important}
+.stat{border-top:1px solid var(--line)!important}
+.tabs{background:#F2F2F2}
+.tabs button{font-weight:700;font-size:15px}
+.tabs button[aria-selected="true"]{background:var(--navy)!important;color:#fff!important;box-shadow:none!important}
+.chip[aria-pressed="true"]{background:var(--navy)!important;border-color:var(--navy)!important;color:#fff!important}
+.chip,.btn{border-radius:6px!important}
+.sl output{color:var(--navy)!important}
+.stat b{color:var(--navy)}
+h2{color:var(--navy)}
+footer{border-top:3px solid var(--navy)}
 </style>
 
 </head><body>
 <div class="wrap">
-  <div class="brandbar">
-    <div class="logo"><img src="https://labs.iitgn.ac.in/spel/assets/images/logo-iitgn-spel.jpg-958x390.jpg" alt="Smart Power Electronics Laboratory (SPEL) and Indian Institute of Technology Gandhinagar logos" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="fallback">SPEL · IIT Gandhinagar</span></div>
-    <div class="inst"><b>Smart Power Electronics Laboratory</b><span>IIT Gandhinagar</span></div>
-  </div>
-  <header class="hero">
-    <div class="eyebrow">Interactive solar PV laboratory</div>
-    <h1>Solar PV Lab</h1>
-    <p class="lede">A <strong>10 kW rooftop bifacial PV plant</strong> you can run: watch <strong>current flow</strong> from the modules to the grid, then add <strong>shading, faults and hot spots</strong> and see what they do to the <strong>I–V and P–V curves</strong>, the <strong>temperatures</strong> and the <strong>maximum power point tracker</strong>.</p>
-    <div class="specgrid">
-      <div><span>Plant</span><b>10.2 kWp</b><small>3 strings × 6 modules</small></div>
-      <div><span>Module</span><b>565 W bifacial</b><small>TOPCon · 144 half-cells</small></div>
-      <div><span>Voc / Isc</span><b>50 V / 14 A</b><small>at STC</small></div>
-      <div><span>Vmp / Imp</span><b>42 V / 13.2 A</b><small>at STC</small></div>
-      <div><span>Light load</span><b>45–46 V</b><small>measured</small></div>
-    </div>
-    <p class="spec" id="spec"><b>Plant:</b> 18 × 565 W bifacial TOPCon modules (144 half-cells, 3 bypass diodes) in 3 strings of 6 → about <b>10.2 kWp</b>. <b>Module:</b> Voc 50 V, Isc 14 A, Vmp 42 V, Imp 13.2 A (45–46 V at light load).</p>
+  <header class="thead">
+    <div class="lg lg-iitgn" role="img" aria-label="IIT Gandhinagar logo"></div>
+    <h1>Interactive Solar PV Lab</h1>
+    <div class="lg lg-spel" role="img" aria-label="SPEL logo"></div>
   </header>
+  <p class="subt">Smart Power Electronics Laboratory (SPEL), IIT Gandhinagar</p>
+  <section class="intro" aria-label="About this lab">
+    <div>
+      <h2>About the lab</h2>
+      <p class="lede">A <strong>10 kW rooftop bifacial PV plant</strong> you can run: watch <strong>current flow</strong> from the modules to the grid, then add <strong>shading, faults and hot spots</strong> and see what they do to the <strong>I–V and P–V curves</strong>, the <strong>temperatures</strong> and the <strong>maximum power point tracker</strong>.</p>
+      <ul class="blist">
+        <li>Curves overlap the STC reference at 1000 W/m², 25 °C cell</li>
+        <li>Shading creates a local peak; MPPT finds the global one</li>
+        <li>Sun position and shadows for Gandhinagar, hour by hour</li>
+      </ul>
+    </div>
+    <div class="greenbox" id="spec">
+      <h2>Plant ratings</h2>
+      <ul class="blist">
+        <li><b>Plant:</b> 18 × 565 W bifacial TOPCon, 3 strings × 6 → <b>10.2 kWp</b></li>
+        <li><b>Module:</b> 144 half-cells, 3 bypass diodes</li>
+        <li><b>Voc / Isc:</b> 50 V / 14 A at STC</li>
+        <li><b>Vmp / Imp:</b> 42 V / 13.2 A at STC</li>
+        <li><b>Light load:</b> 45–46 V measured</li>
+      </ul>
+    </div>
+  </section>
 
   <nav class="tabs" role="tablist" aria-label="Lab sections">
     <button role="tab" id="t-plant" aria-selected="true" data-tab="plant">Plant</button>
